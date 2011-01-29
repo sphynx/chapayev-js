@@ -2,7 +2,7 @@ var cs = 50; // cell size
 var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
-var k = 1.5; // coefficient of "push-power"
+var k = 1; // coefficient of "push-power"
 var whiteRow = 8;
 var redRow = 4;
 
@@ -127,8 +127,9 @@ function resolveCollision(p0, pc, pf, pv, q, ratio) {
     var v2t_new_scalar = v2t;
 
     // 5)
-    var v1n_new_scalar = v2n;
-    var v2n_new_scalar = v1n;
+    var c = 1; // elastic case
+    var v1n_new_scalar = (c * (v2n - v1n) + v1n + v2n) / 2;
+    var v2n_new_scalar = (c * (v1n - v2n) + v1n + v2n) / 2;
 
     // 6)
     var v1n_new = un.x(v1n_new_scalar);
@@ -143,8 +144,10 @@ function resolveCollision(p0, pc, pf, pv, q, ratio) {
     return {
         // p: pv.x(-0.1 * (1 - ratio)),
         // q: pv.x(0.25 * (1 - ratio))
-        p: v1_new,
-        q: v2_new
+        p: v1_new.x(1 - ratio),
+        q: v2_new.x(1 - ratio)
+        // p: v1_new,
+        // q: v2_new
     };
 }
 
@@ -161,34 +164,36 @@ function startBall(ball, balls) {
         var other = pcb.ball;
         var ratio = getRatio(p0, pc, pf);
 
-        ball.animate({cx: pc.e(1),
-                      cy: pc.e(2)},
-                     1000 * ratio,
-                     easing,
-                     function() {
-                         var resolved = resolveCollision(p0, pc, pf,
-                                                         $V([ball.vx, ball.vy]),
-                                                         $V([other.attr("cx"), other.attr("cy")]),
-                                                         ratio);
-
-                         var pvx = resolved.p.e(1);
-                         var pvy = resolved.p.e(2);
-                         var qvx = resolved.q.e(1);
-                         var qvy = resolved.q.e(2);
-
-                         ball.vx = pvx;
-                         ball.vy = pvy;
-                         other.vx = qvx;
-                         other.vy = qvy;
-
-                         startBall(other, balls);
-                         startBall(ball, balls);
-                     });
+        ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
+                     makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio));
 
     } else {
         ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing);
     }
 }
+
+function makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio) {
+
+    return function() {
+        var resolved = resolveCollision(p0, pc, pf,
+                                        $V([ball.vx, ball.vy]),
+                                        $V([other.attr("cx"), other.attr("cy")]),
+                                        ratio);
+
+        var pvx = resolved.p.e(1);
+        var pvy = resolved.p.e(2);
+        var qvx = resolved.q.e(1);
+        var qvy = resolved.q.e(2);
+
+        ball.vx = pvx;
+        ball.vy = pvy;
+        other.vx = qvx;
+        other.vy = qvy;
+
+        startBall(other, balls);
+        startBall(ball, balls);
+    };
+};
 
 function getBallSpeed(e, box) {
     var x, y, holder, f;
@@ -264,6 +269,7 @@ function drawBoard() {
         // setup click listeners
         c1.node.onclick = makeClickListener(c1, balls);
         c2.node.onclick = makeClickListener(c2, balls);
+
     }
 }
 

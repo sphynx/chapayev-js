@@ -24,6 +24,9 @@ function getStopPoint(p, vx, vy) {
 // ball P moves from (p0x, p0y) to (pfx, pfy)
 // ball Q stays at (q0x, q0y)
 // returns vector of collision point or null if there is no collision
+
+// implementaion is based on the article "Predictive Collision Detection":
+// http://www.a-coding.com/2010/10/predictive-collision-detection.html
 function predictCollisionPoint(p0, pf, q0) {
     var dp = pf.subtract(p0);
 
@@ -94,11 +97,54 @@ function getRatio(p0, pc, pf) {
 //
 // returns new velocity vectors for both P and Q:
 // {p: Pv, q: Qv}
+
+// Implementation is based on article
+// "Elastic Collisions Using Vectors instead of Trigonometry"
+// http://www.vobarian.com/collisions/
 function resolveCollision(p0, pc, pf, pv, q, ratio) {
 
+    var x = pc;
+    var y = q;
+
+    // steps from the article
+    // 1)
+    var n = x.subtract(y);
+    var un = n.toUnitVector();
+    var ut = $V([-un.e(2), un.e(1)]);
+
+    // 2)
+    var v1 = pv;
+    var v2 = Vector.Zero(2);
+
+    // 3)
+    var v1n = un.dot(v1);
+    var v1t = ut.dot(v1);
+    var v2n = un.dot(v2);
+    var v2t = ut.dot(v2);
+
+    // 4)
+    var v1t_new_scalar = v1t;
+    var v2t_new_scalar = v2t;
+
+    // 5)
+    var v1n_new_scalar = v2n;
+    var v2n_new_scalar = v1n;
+
+    // 6)
+    var v1n_new = un.x(v1n_new_scalar);
+    var v1t_new = ut.x(v1t_new_scalar);
+    var v2n_new = un.x(v2n_new_scalar);
+    var v2t_new = ut.x(v2t_new_scalar);
+
+    // 7)
+    var v1_new = v1n_new.add(v1t_new);
+    var v2_new = v2n_new.add(v2t_new);
+
     return {
-        p: Vector.Zero(2),
-        q: pv.x(0.25 * (1 - ratio))
+        // p: pv.x(-0.1 * (1 - ratio)),
+        // q: pv.x(0.25 * (1 - ratio))
+        p: v1_new,
+        q: v2_new
     };
 }
 
@@ -130,10 +176,13 @@ function startBall(ball, balls) {
                          var qvx = resolved.q.e(1);
                          var qvy = resolved.q.e(2);
 
+                         ball.vx = pvx;
+                         ball.vy = pvy;
                          other.vx = qvx;
                          other.vy = qvy;
 
                          startBall(other, balls);
+                         startBall(ball, balls);
                      });
 
     } else {

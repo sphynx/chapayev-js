@@ -4,31 +4,27 @@ var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
 var k = 1.5; // coefficient of "push-power"
 var whiteRow = 8;
-var redRow = 4; 
+var redRow = 4;
 
 // utility functions
 var pow = Math.pow;
-function sqr(x) { 
+function sqr(x) {
     return pow(x, 2);
 }
 
-// given start position and velocity vector, 
+// given start position and velocity vector,
 // calculates the position where ball will stop
-function getStopPoint(px, py, vx, vy) {
+function getStopPoint(p, vx, vy) {
     var dx = vx / cr * bs * k;
     var dy = vy / cr * bs * k;
-    return [px + dx, py + dy];
+    return p.add($V([dx, dy]));
 }
 
 // predict collision point for 2 balls (if exists).
 // ball P moves from (p0x, p0y) to (pfx, pfy)
 // ball Q stays at (q0x, q0y)
 // returns vector of collision point or null if there is no collision
-function predictCollisionPoint(p0x, p0y, pfx, pfy, q0x, q0y) {
-    // convert to vectors
-    var p0 = $V([p0x, p0y]);
-    var pf = $V([pfx, pfy]);
-    var q0 = $V([q0x, q0y]);
+function predictCollisionPoint(p0, pf, q0) {
     var dp = pf.subtract(p0);
 
     // solve quadratic equation for vectors
@@ -51,29 +47,27 @@ function predictCollisionPoint(p0x, p0y, pfx, pfy, q0x, q0y) {
 // check all the balls to find whether they collide with given ball
 // and find the nearest one.
 // ball P moves from (p0x, p0y) to (pfx, pfy)
-function getNearestCollisionPoint(p0x, p0y, pfx, pfy, balls) {
-    var i, cp, points = [];
-    for (i = 0; i < balls.length; i++) {
-        var other = balls[i];
-        var q0x = other.attr("cx");
-        var q0y = other.attr("cy");
+function getNearestCollisionPoint(p0, pf, balls) {
+    var i, d, cp, other, q0, points = [];
+    var result = null, dmin = 100000;
 
-        // skip the ball we are checking as we don't want it 
+    for (i = 0; i < balls.length; i++) {
+        other = balls[i];
+        q0 = $V([other.attr("cx"), other.attr("cy")]);
+
+        // skip the ball we are checking as we don't want it
         // to collide with itself
-        if (p0x !== q0x || p0y !== q0y) {
-            cp = predictCollisionPoint(p0x, p0y, pfx, pfy, q0x, q0y);
+        if (!p0.eql(q0)) {
+            cp = predictCollisionPoint(p0, pf, q0);
             if (cp) {
                 points.push({point: cp, ball: other});
             }
         }
     }
 
-    var p = $V([p0x, p0y]);
-    var result = null, dmin = 100000;
-
     // detect nearest point, iterate over them and check
     for (i = 0; i < points.length; i++) {
-        var d = points[i].point.distanceFrom(p);
+        d = points[i].point.distanceFrom(p0);
         if (d < dmin) {
             dmin = d;
             result = points[i];
@@ -83,38 +77,73 @@ function getNearestCollisionPoint(p0x, p0y, pfx, pfy, balls) {
     return result;
 }
 
+
+function getRatio(p0, pc, pf) {
+    var intendedDistance = pf.distanceFrom(p0);
+    var collisionDistance = pc.distanceFrom(p0);
+    return collisionDistance / intendedDistance;
+}
+
+// resolves collision between two balls: P and Q
+//
+// parameters:
+// P started from `p0` with velocity `pv`, intended to go to `pf`,
+// but collided at `pc`
+//
+// Q just stands at `q`
+//
+// returns new velocity vectors for both P and Q:
+// {p: Pv, q: Qv}
+function resolveCollision(p0, pc, pf, pv, q, ratio) {
+
+    return {
+        p: Vector.Zero(2),
+        q: pv.x(0.25 * (1 - ratio))
+    };
+}
+
 function startBall(ball, balls) {
 
-    var cx = ball.attr("cx");
-    var cy = ball.attr("cy");
-    var pf = getStopPoint(cx, cy, ball.vx, ball.vy);
+    var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
+    var pf = getStopPoint(p0, ball.vx, ball.vy);
+    var pcb = getNearestCollisionPoint(p0, pf, balls);
 
-    var collisionPoint = getNearestCollisionPoint(cx, cy, pf[0], pf[1], balls);
-    
-    if (collisionPoint) {
-        var realD = $V([pf[0], pf[1]]).distanceFrom($V([cx, cy]));
-        var d = collisionPoint.point.distanceFrom($V([cx, cy]));
-        var ratio = d / realD;
-        var easing = ratio > 0.2 ? ">" : "<";
-        ball.animate({cx: collisionPoint.point.e(1), 
-                      cy: collisionPoint.point.e(2)}, 
-                     1000 * ratio, 
-                     easing,  
+    var easing = "linear";
+
+    if (pcb) {
+        var pc = pcb.point;
+        var other = pcb.ball;
+        var ratio = getRatio(p0, pc, pf);
+
+        ball.animate({cx: pc.e(1),
+                      cy: pc.e(2)},
+                     1000 * ratio,
+                     easing,
                      function() {
-                         collisionPoint.ball.vx = ball.vx * (1 - ratio);
-                         collisionPoint.ball.vy = ball.vy * (1 - ratio);
-                         startBall(collisionPoint.ball, balls);
+                         var resolved = resolveCollision(p0, pc, pf,
+                                                         $V([ball.vx, ball.vy]),
+                                                         $V([other.attr("cx"), other.attr("cy")]),
+                                                         ratio);
+
+                         var pvx = resolved.p.e(1);
+                         var pvy = resolved.p.e(2);
+                         var qvx = resolved.q.e(1);
+                         var qvy = resolved.q.e(2);
+
+                         other.vx = qvx;
+                         other.vy = qvy;
+
+                         startBall(other, balls);
                      });
-        
+
     } else {
-        var f = getStopPoint(ball.attr("cx"), ball.attr("cy"), ball.vx, ball.vy);
-        ball.animate({cx: f[0], cy: f[1]}, 1000, ">");
+        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing);
     }
 }
 
 function getBallSpeed(e, box) {
     var x, y, holder, f;
-    
+
     // absolute location
     if (e.pageX !== undefined && e.pageY !== undefined) {
 	    x = e.pageX;
@@ -130,7 +159,7 @@ function getBallSpeed(e, box) {
     holder = document.getElementById("holder");
     x -= holder.offsetLeft;
     y -= holder.offsetTop;
-    
+
     // (center of the box)-related location
     x -= (box.x + box.width / 2);
     y -= (box.y + box.height / 2);

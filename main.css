@@ -1,0 +1,18 @@
+/* Graphics specific stuff */
+/* #canvas { border: 3px dotted #D3D3D3; margin-top: 50px; } */
+
+body {
+    background: #333;
+    color: #fff;
+    font: 300 100.1% "Helvetica Neue", Helvetica, "Arial Unicode MS", Arial, sans-serif;
+}
+
+#holder {
+    width: 640px;
+    height: 480px;
+    left: 50%;
+    margin: -240px 0 0 -320px;
+    position: absolute;
+    top: 50%;
+    border: 3px dashed #fff;
+}

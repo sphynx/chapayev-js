@@ -1,0 +1,39 @@
+|p(t) - q(t)|^2 =
+|(p0 + t * dp) - (q0 + t * dq)|^2
+|((p0x, p0y) + t * (dpx, dpy)) - ((q0x, q0y) + t * (dqx, dqy))|^2
+|(p0x + t * dpx, p0y + t * dpy) - (q0x + t * dqx, q0y + t * dqy)| ^ 2
+|(p0x - q0x + t * dpx - t * dqx, p0y - q0y + t * dpy - t * dqy)| ^ 2
+(p0x - q0x + t * dpx - t * dqx) ^ 2  + (p0y - q0y + t * dpy - t * dqy) ^ 2
+(p0x - q0x + t * (dpx - dqx)) ^ 2  + (p0y - q0y + t * (dpy - dqy)) ^ 2
+(dpx - dqx)^2 * (t^2) + 2 (dpx - dqx) (p0x - q0x) t + (p0x - q0x) ^ 2 + (dpy - dqy)^2 * (t^2) + 2 (dpy - dqy) (p0y - q0y) t + (p0y - q0y) ^ 2
+
+((dpx - dqx)^2 + (dpy - dqy)^2) * t^2 + (2 (dpx - dqx) (p0x - q0x) + 2 (dpy - dqy) (p0y - q0y)) * t + ((p0x - q0x) ^ 2 + (p0y - q0y) ^ 2 ) - (r1 + r2) ^2 = 0
+
+
+A = (dpx - dqx) ^ 2 + (dpy - dqy) ^ 2
+B = 2 (dpx - dqx) (p0x - q0x) + 2 (dpy - dqy) (p0y - q0y)
+C = (p0x - q0x) ^ 2 + (p0y - q0y) ^ 2 - (r1 + r2) ^ 2
+
+
+* A = dpx ^ 2 + dpy ^ 2
+B = 2 dpx (p0x - q0x) + 2 dpy (p0y - q0y)
+C = (p0x - q0x) ^ 2 + (p0y - q0y) ^ 2 - 4 * r1 ^ 2
+
+var a = Math.pow(dp.modulus(), 2);
+var b = p0.add(q0).x(-2).dot(dp);
+var c = Math.pow(q0.subtract(p0).modulus(), 2) - 4 * Math.pow(r, 2);
+
+
+B = 2 90 (10 - 20) + 2 * 0 * 0 = -1800
+p0 = 10 0
+q0 = 20 0
+dp = 90 0
+
+b = -2 (30 0) (90 0)
+b = (-60 0)(90 0) = -5400
+
+
+    // var a = Math.pow(dq.subtract(dp).modulus(), 2);
+    // var b = p0.add(q0).x(-2).dot(dp.add(dq));
+    // var c = Math.pow(q0.subtract(p0).modulus(), 2) - 4 * Math.pow(r, 2);
+    // var d = Math.sqrt(b * b - 4 * a * c);

@@ -1,10 +1,19 @@
 var cs = 50; // cell size
+var boardTop = 0;
+var boardLeft = 0;
 var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
-var k = 1; // coefficient of "push-power"
+var k = 1.5; // coefficient of "push-power"
 var whiteRow = 8;
-var redRow = 4;
+var redRow = 1;
+
+var redScoreText;
+var whiteScoreText;
+var whiteScore = 8;
+var redScore = 8;
+
+var R;
 
 // utility functions
 var pow = Math.pow;
@@ -168,7 +177,13 @@ function startBall(ball, balls) {
                      makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio));
 
     } else {
-        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing);
+        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing,
+                     function() {
+                         if (this.attr("cx") < cs || this.attr("cx") > cs * (rows + 1)
+                          || this.attr("cy") < cs || this.attr("cy") > cs * (rows + 1)) {
+                             this.animate({"opacity": 0}, 400, "linear", function() { decreaseScore(this.team); this.remove(); });
+                         }
+                     });
     }
 }
 
@@ -239,8 +254,25 @@ function init() {
     };
 }
 
+function decreaseScore(team) {
+    if (team === "white") {
+        whiteScore--;
+    } else {
+        redScore--;
+    }
+    drawScore(whiteScore, redScore);
+}
+
+function drawScore(w, r) {
+    var font = {font: '50px Helvetica, Arial', opacity: 0.5};
+    whiteScoreText && whiteScoreText.remove();
+    whiteScoreText = R.text(560, 400, w).attr(font).attr("fill", "white");
+    redScoreText && redScoreText.remove();
+    redScoreText = R.text(560, 110, r).attr(font).attr("fill", "red");
+}
+
 function drawBoard() {
-    var R = Raphael("holder", 640, 480);
+    R = Raphael("holder", 640, 480);
 
     var i;
     var p = "";
@@ -248,29 +280,32 @@ function drawBoard() {
 
     // 8x8 grid with path lines
     for (i = 1; i <= rows + 1; i++) {
-        p += "M" + (cs * i + 0.5) + " " + cs + "v" + bs;
-        p += "M" + cs + " " + (cs * i + 0.5) + "h" + bs;
+        p += "M" + (boardLeft + cs * i + 0.5) + " " + (boardTop + cs) + "v" + bs;
+        p += "M" + (boardLeft + cs) + " " + (boardTop + cs * i + 0.5) + "h" + bs;
     }
     p += "z";
     R.path(p).attr("stroke-width", 1);
 
     // setup balls
     for (i = 1; i <= rows; i++) {
-        var x = cs * i + cs/2 + 0.5;
+        var x = boardLeft + cs * i + cs/2 + 0.5;
 
-        var c1 = R.circle(x, 1/2 * cs + (redRow * cs), cr).attr("stroke-width", 3);
+        var c1 = R.circle(x, boardTop + 1/2 * cs + (redRow * cs), cr).attr("stroke-width", 3);
         c1.attr("fill", "red");
+        c1.team = "red";
         balls.push(c1);
 
-        var c2 = R.circle(x, 1/2 * cs + (whiteRow * cs), cr).attr("stroke-width", 3);
+        var c2 = R.circle(x, boardTop + 1/2 * cs + (whiteRow * cs), cr).attr("stroke-width", 3);
         c2.attr("fill", "white");
+        c2.team = "white";
         balls.push(c2);
 
         // setup click listeners
         c1.node.onclick = makeClickListener(c1, balls);
         c2.node.onclick = makeClickListener(c2, balls);
-
     }
+
+    drawScore(whiteScore, redScore, R);
 }
 
 $(function() {

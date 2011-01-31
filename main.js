@@ -274,7 +274,7 @@ function init() {
 function drawBoard() {
     R = Raphael("holder", 500, 500);
 
-    var i;
+    var i, x, c;
     var p = "";
 
     // 8x8 grid with path lines
@@ -287,23 +287,22 @@ function drawBoard() {
 
     // setup balls
     for (i = 1; i <= rows; i++) {
-        var x = cs * i + cs/2;
+        x = cs * i + cs / 2;
 
-        var c1 = R.circle(x, 1/2 * cs + (model.redRow * cs), cr).attr("stroke-width", 3);
-        c1.attr("fill", "red");
-        c1.team = "red";
-        c1.name = "r" + i;
-        model.red.push(c1);
+        c = R.circle(x, 1/2 * cs + (model.redRow * cs), cr).attr("stroke-width", 3);
+        c.attr("fill", "red");
+        c.team = "red";
+        c.name = "r" + i;
+        c.node.onclick = makeClickListener(c);
+        model.red.push(c);
 
-        var c2 = R.circle(x, 1/2 * cs + (model.whiteRow * cs), cr).attr("stroke-width", 3);
-        c2.attr("fill", "white");
-        c2.team = "white";
-        c2.name = "w" + i;
-        model.white.push(c2);
+        c = R.circle(x, 1/2 * cs + (model.whiteRow * cs), cr).attr("stroke-width", 3);
+        c.attr("fill", "white");
+        c.team = "white";
+        c.name = "w" + i;
+        c.node.onclick = makeClickListener(c);
+        model.white.push(c);
 
-        // setup click listeners
-        c1.node.onclick = makeClickListener(c1);
-        c2.node.onclick = makeClickListener(c2);
     }
 }
 

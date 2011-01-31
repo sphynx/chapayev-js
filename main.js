@@ -4,7 +4,7 @@ var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
 var k = 1.5; // coefficient of "push-power"
 
-var R;
+var R; // Raphael object
 
 // KO model
 var model = {
@@ -35,9 +35,9 @@ function getStopPoint(p, vx, vy) {
 // predict collision point for 2 balls (if exists).
 // ball P moves from (p0x, p0y) to (pfx, pfy)
 // ball Q stays at (q0x, q0y)
-// returns vector of collision point or null if there is no collision
-
-// implementaion is based on the article "Predictive Collision Detection":
+// returns vector of collision point or null if there is no collision.
+//
+// Implementaion is based on the article "Predictive Collision Detection":
 // http://www.a-coding.com/2010/10/predictive-collision-detection.html
 function predictCollisionPoint(p0, pf, q0) {
     var dp = pf.subtract(p0);
@@ -109,7 +109,7 @@ function getRatio(p0, pc, pf) {
 //
 // returns new velocity vectors for both P and Q:
 // {p: Pv, q: Qv}
-
+//
 // Implementation is based on article
 // "Elastic Collisions Using Vectors instead of Trigonometry"
 // http://www.vobarian.com/collisions/
@@ -163,7 +163,7 @@ function resolveCollision(p0, pc, pf, pv, q, ratio) {
     };
 }
 
-function startBall(ball) {
+function startBall(ball, parentBall) {
 
     var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
     var pf = getStopPoint(p0, ball.vx, ball.vy);
@@ -176,8 +176,14 @@ function startBall(ball) {
         var other = pcb.ball;
         var ratio = getRatio(p0, pc, pf);
 
-        ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
+        if (parentBall) {
+            ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
                      makeCollisionCallback(p0, pc, pf, ball, other, ratio));
+
+        } else {
+            ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
+                     makeCollisionCallback(p0, pc, pf, ball, other, ratio));
+        }
 
     } else {
         ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing,
@@ -216,7 +222,7 @@ function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
         other.vy = qvy;
 
         startBall(other);
-        startBall(ball);
+        startBall(ball, other);
     };
 };
 

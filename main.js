@@ -3,15 +3,20 @@ var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
 var k = 1.5; // coefficient of "push-power"
-var whiteRow = 8;
-var redRow = 1;
-
-var redScoreText;
-var whiteScoreText;
-var whiteScore = 8;
-var redScore = 8;
 
 var R;
+
+// KO model
+var model = {
+    white: ko.observableArray([]),
+    red: ko.observableArray([]),
+    whiteRow: 8,
+    redRow: 1
+};
+model.all = ko.dependentObservable(
+    function() {
+        return this.white().concat(this.red());
+    }, model);
 
 // utility functions
 var pow = Math.pow;
@@ -57,12 +62,12 @@ function predictCollisionPoint(p0, pf, q0) {
 // check all the balls to find whether they collide with given ball
 // and find the nearest one.
 // ball P moves from (p0x, p0y) to (pfx, pfy)
-function getNearestCollisionPoint(p0, pf, balls) {
+function getNearestCollisionPoint(p0, pf) {
     var i, d, cp, other, q0, points = [];
     var result = null, dmin = 100000;
 
-    for (i = 0; i < balls.length; i++) {
-        other = balls[i];
+    for (i = 0; i < model.all().length; i++) {
+        other = model.all()[i];
         q0 = $V([other.attr("cx"), other.attr("cy")]);
 
         // skip the ball we are checking as we don't want it
@@ -158,11 +163,11 @@ function resolveCollision(p0, pc, pf, pv, q, ratio) {
     };
 }
 
-function startBall(ball, balls) {
+function startBall(ball) {
 
     var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
     var pf = getStopPoint(p0, ball.vx, ball.vy);
-    var pcb = getNearestCollisionPoint(p0, pf, balls);
+    var pcb = getNearestCollisionPoint(p0, pf);
 
     var easing = "linear";
 
@@ -172,7 +177,7 @@ function startBall(ball, balls) {
         var ratio = getRatio(p0, pc, pf);
 
         ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
-                     makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio));
+                     makeCollisionCallback(p0, pc, pf, ball, other, ratio));
 
     } else {
         ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing,
@@ -180,14 +185,19 @@ function startBall(ball, balls) {
                          if (this.attr("cx") < cs || this.attr("cx") > cs * (rows + 1)
                           || this.attr("cy") < cs || this.attr("cy") > cs * (rows + 1)) {
                              this.animate({"opacity": 0}, 400, "linear", function() {
-                                              decreaseScore(this.team);
-                                              this.remove(); });
+                                              if (this.team === "red") {
+                                                  model.red.remove(this);
+                                              } else {
+                                                  model.white.remove(this);
+                                              }
+                                              this.remove();
+                                          });
                          }
                      });
     }
 }
 
-function makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio) {
+function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
 
     return function() {
         var resolved = resolveCollision(p0, pc, pf,
@@ -205,8 +215,8 @@ function makeCollisionCallback(p0, pc, pf, ball, other, balls, ratio) {
         other.vx = qvx;
         other.vy = qvy;
 
-        startBall(other, balls);
-        startBall(ball, balls);
+        startBall(other);
+        startBall(ball);
     };
 };
 
@@ -237,7 +247,7 @@ function getBallSpeed(e, box) {
     return [-x, -y];
 }
 
-function makeClickListener(ball, balls) {
+function makeClickListener(ball) {
     return function(e) {
         // set ball velocity and start animation
         var v = getBallSpeed(e, ball.getBBox());
@@ -245,7 +255,7 @@ function makeClickListener(ball, balls) {
         ball.vy = v[1];
 
         //alert("id=" + ball.name + ", vx=" + ball.vx + " , vy=" + ball.vy);
-        startBall(ball, balls);
+        startBall(ball);
     };
 }
 
@@ -255,29 +265,11 @@ function init() {
     };
 }
 
-function decreaseScore(team) {
-    if (team === "white") {
-        whiteScore--;
-    } else {
-        redScore--;
-    }
-    drawScore(whiteScore, redScore);
-}
-
-function drawScore(w, r) {
-    var font = {font: '50px Helvetica, Arial', opacity: 0.5};
-    whiteScoreText && whiteScoreText.remove();
-    whiteScoreText = R.text(560, 400, w).attr(font).attr("fill", "white");
-    redScoreText && redScoreText.remove();
-    redScoreText = R.text(560, 110, r).attr(font).attr("fill", "red");
-}
-
 function drawBoard() {
-    R = Raphael("holder", 640, 480);
+    R = Raphael("holder", 500, 500);
 
     var i;
     var p = "";
-    var balls = [];
 
     // 8x8 grid with path lines
     for (i = 1; i <= rows + 1; i++) {
@@ -291,28 +283,27 @@ function drawBoard() {
     for (i = 1; i <= rows; i++) {
         var x = cs * i + cs/2;
 
-        var c1 = R.circle(x, 1/2 * cs + (redRow * cs), cr).attr("stroke-width", 3);
+        var c1 = R.circle(x, 1/2 * cs + (model.redRow * cs), cr).attr("stroke-width", 3);
         c1.attr("fill", "red");
         c1.team = "red";
         c1.name = "r" + i;
-        balls.push(c1);
+        model.red.push(c1);
 
-        var c2 = R.circle(x, 1/2 * cs + (whiteRow * cs), cr).attr("stroke-width", 3);
+        var c2 = R.circle(x, 1/2 * cs + (model.whiteRow * cs), cr).attr("stroke-width", 3);
         c2.attr("fill", "white");
         c2.team = "white";
         c2.name = "w" + i;
-        balls.push(c2);
+        model.white.push(c2);
 
         // setup click listeners
-        c1.node.onclick = makeClickListener(c1, balls);
-        c2.node.onclick = makeClickListener(c2, balls);
+        c1.node.onclick = makeClickListener(c1);
+        c2.node.onclick = makeClickListener(c2);
     }
-
-    drawScore(whiteScore, redScore, R);
 }
 
 $(function() {
    init();
+   ko.applyBindings(model);
    drawBoard();
 });
 

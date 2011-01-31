@@ -2,18 +2,26 @@
 <html>
   <head>
     <meta charset="utf-8">
-    
+
     <title>Chapayev</title>
 
     <link rel="stylesheet" href="main.css"/>
+
     <script src="jquery-1.4.4.js"></script>
-    <script src="main.js"></script>
+    <script src="knockout-1.1.2.debug.js"></script>
     <script src="raphael.js"></script>
     <script src="sylvester.src.js"></script>
+    <script src="main.js"></script>
 
   </head>
   <body>
     <div id="holder">
     </div>
+
+    <div id="info">
+      <span id="redScore" class="score" data-bind="text: red().length"></span>
+      <span id="whiteScore" class="score" data-bind="text: white().length"></span>
+    </div>
+
   </body>
 </html>

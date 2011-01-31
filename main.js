@@ -1,6 +1,4 @@
 var cs = 50; // cell size
-var boardTop = 0;
-var boardLeft = 0;
 var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
@@ -181,7 +179,9 @@ function startBall(ball, balls) {
                      function() {
                          if (this.attr("cx") < cs || this.attr("cx") > cs * (rows + 1)
                           || this.attr("cy") < cs || this.attr("cy") > cs * (rows + 1)) {
-                             this.animate({"opacity": 0}, 400, "linear", function() { decreaseScore(this.team); this.remove(); });
+                             this.animate({"opacity": 0}, 400, "linear", function() {
+                                              decreaseScore(this.team);
+                                              this.remove(); });
                          }
                      });
     }
@@ -214,7 +214,7 @@ function getBallSpeed(e, box) {
     var x, y, holder, f;
 
     // absolute location
-    if (e.pageX !== undefined && e.pageY !== undefined) {
+    if (e.pageX && e.pageX != undefined && e.pageY && e.pageY != undefined) {
 	    x = e.pageX;
 	    y = e.pageY;
     } else {
@@ -244,6 +244,7 @@ function makeClickListener(ball, balls) {
         ball.vx = v[0];
         ball.vy = v[1];
 
+        //alert("id=" + ball.name + ", vx=" + ball.vx + " , vy=" + ball.vy);
         startBall(ball, balls);
     };
 }
@@ -280,24 +281,26 @@ function drawBoard() {
 
     // 8x8 grid with path lines
     for (i = 1; i <= rows + 1; i++) {
-        p += "M" + (boardLeft + cs * i + 0.5) + " " + (boardTop + cs) + "v" + bs;
-        p += "M" + (boardLeft + cs) + " " + (boardTop + cs * i + 0.5) + "h" + bs;
+        p += "M" + (cs * i) + " " + cs + "v" + bs;
+        p += "M" + cs + " "  + cs * i + "h" + bs;
     }
     p += "z";
     R.path(p).attr("stroke-width", 1);
 
     // setup balls
     for (i = 1; i <= rows; i++) {
-        var x = boardLeft + cs * i + cs/2 + 0.5;
+        var x = cs * i + cs/2;
 
-        var c1 = R.circle(x, boardTop + 1/2 * cs + (redRow * cs), cr).attr("stroke-width", 3);
+        var c1 = R.circle(x, 1/2 * cs + (redRow * cs), cr).attr("stroke-width", 3);
         c1.attr("fill", "red");
         c1.team = "red";
+        c1.name = "r" + i;
         balls.push(c1);
 
-        var c2 = R.circle(x, boardTop + 1/2 * cs + (whiteRow * cs), cr).attr("stroke-width", 3);
+        var c2 = R.circle(x, 1/2 * cs + (whiteRow * cs), cr).attr("stroke-width", 3);
         c2.attr("fill", "white");
         c2.team = "white";
+        c2.name = "w" + i;
         balls.push(c2);
 
         // setup click listeners

@@ -2,7 +2,7 @@ var cs = 50; // cell size
 var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
-var k = 1.5; // coefficient of "push-power"
+var k = 1.3; // coefficient of "push-power"
 
 var R; // Raphael object
 
@@ -169,24 +169,28 @@ function startBall(ball, parentBall) {
     var pf = getStopPoint(p0, ball.vx, ball.vy);
     var pcb = getNearestCollisionPoint(p0, pf);
 
-    var easing = "linear";
-
     if (pcb) {
         var pc = pcb.point;
         var other = pcb.ball;
         var ratio = getRatio(p0, pc, pf);
+        var timeRatio = 1 - Math.pow(1 - ratio, 1/3);
+
+        Raphael.easing_formulas["custom" + ratio] = function(n) {
+            var f = Raphael.easing_formulas[">"];
+            return (1 / ratio) * f(timeRatio * n);
+        };
 
         if (parentBall) {
-            ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
+            ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, "custom" + ratio,
                      makeCollisionCallback(p0, pc, pf, ball, other, ratio));
 
         } else {
-            ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * ratio, easing,
+            ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, "custom" + ratio,
                      makeCollisionCallback(p0, pc, pf, ball, other, ratio));
         }
 
     } else {
-        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, easing,
+        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">",
                      function() {
                          if (this.attr("cx") < cs || this.attr("cx") > cs * (rows + 1)
                           || this.attr("cy") < cs || this.attr("cy") > cs * (rows + 1)) {
@@ -211,15 +215,13 @@ function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
                                         $V([other.attr("cx"), other.attr("cy")]),
                                         ratio);
 
-        var pvx = resolved.p.e(1);
-        var pvy = resolved.p.e(2);
-        var qvx = resolved.q.e(1);
-        var qvy = resolved.q.e(2);
+        // remove easing function used in this animation
+        delete Raphael.easing_formulas["custom" + ratio];
 
-        ball.vx = pvx;
-        ball.vy = pvy;
-        other.vx = qvx;
-        other.vy = qvy;
+        ball.vx = resolved.p.e(1);
+        ball.vy = resolved.p.e(2);
+        other.vx = resolved.q.e(1);
+        other.vy = resolved.q.e(2);
 
         startBall(other);
         startBall(ball, other);
@@ -266,13 +268,10 @@ function makeClickListener(ball) {
 }
 
 function init() {
-    Raphael.easing_formulas.test = function(n) {
-         return n;
-    };
+    R = Raphael("holder", 500, 500);
 }
 
 function drawBoard() {
-    R = Raphael("holder", 500, 500);
 
     var i, x, c;
     var p = "";

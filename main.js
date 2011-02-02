@@ -163,6 +163,10 @@ function resolveCollision(p0, pc, pf, pv, q, ratio) {
     };
 }
 
+function mkEasingName(ratio) {
+    return "custom" + ratio;
+}
+
 function startBall(ball, parentBall) {
 
     var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
@@ -175,17 +179,19 @@ function startBall(ball, parentBall) {
         var ratio = getRatio(p0, pc, pf);
         var timeRatio = 1 - Math.pow(1 - ratio, 1/3);
 
-        Raphael.easing_formulas["custom" + ratio] = function(n) {
+        var easingId = mkEasingName(ratio);
+
+        Raphael.easing_formulas[easingId] = function(n) {
             var f = Raphael.easing_formulas[">"];
             return (1 / ratio) * f(timeRatio * n);
         };
 
         if (parentBall) {
-            ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, "custom" + ratio,
+            ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, easingId,
                      makeCollisionCallback(p0, pc, pf, ball, other, ratio));
 
         } else {
-            ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, "custom" + ratio,
+            ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, easingId,
                      makeCollisionCallback(p0, pc, pf, ball, other, ratio));
         }
 
@@ -216,7 +222,7 @@ function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
                                         ratio);
 
         // remove easing function used in this animation
-        delete Raphael.easing_formulas["custom" + ratio];
+        delete Raphael.easing_formulas[mkEasingName(ratio)];
 
         ball.vx = resolved.p.e(1);
         ball.vy = resolved.p.e(2);

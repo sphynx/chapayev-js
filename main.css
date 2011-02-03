@@ -39,3 +39,14 @@ body {
     color: white;
     margin-top: 120px;
 }
+
+#status {
+    color: white;
+}
+
+#status-block {
+    padding: 1em 1em;
+}
+
+.connected { color: green; }
+.disconnected { color: red; }

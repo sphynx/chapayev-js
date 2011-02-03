@@ -4,14 +4,19 @@ var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
 var k = 1.3; // coefficient of "push-power"
 
+var host = 'eth0.net.ua';
+var port = 8124;
+
 var R; // Raphael object
+var socket; // For connection to server
 
 // KO model
 var model = {
     white: ko.observableArray([]),
     red: ko.observableArray([]),
     whiteRow: 8,
-    redRow: 1
+    redRow: 1,
+    status: ko.observable("disconnected")
 };
 model.all = ko.dependentObservable(
     function() {
@@ -268,13 +273,33 @@ function makeClickListener(ball) {
         ball.vx = v[0];
         ball.vy = v[1];
 
-        //alert("id=" + ball.name + ", vx=" + ball.vx + " , vy=" + ball.vy);
         startBall(ball);
     };
 }
 
 function init() {
     R = Raphael("holder", 500, 500);
+
+    socket = new io.Socket(host, { port: port });
+    socket.connect();
+
+    socket.on(
+        'connect', 
+        function() {
+            model.status('connected');
+        });
+
+    socket.on(
+        'message', 
+        function(data) {
+            console.log('Received a message from the server!', data);
+        });
+
+    socket.on(
+        'disconnect', 
+        function() {
+            console.log('The server has disconnected!');
+        });
 }
 
 function drawBoard() {

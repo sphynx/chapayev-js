@@ -11,8 +11,10 @@ function cmdHandler(message, client) {
     console.log('got cmd: ' + cmdName);
     switch (cmdName) {
         case 'nick':
-        players[client.sessionId].nick = message.arg;
-        console.log('nick has been changed to ' + message.arg + ' for player ' + client.sessionId);
+        var nick = message.arg;
+        players[client.sessionId].nick = nick;
+        console.log('nick has been changed to ' + nick + ' for player ' + client.sessionId);
+        socket.broadcast({ type: 'nickchange', id: client.sessionId, nick: nick });
         break;
 
         default:

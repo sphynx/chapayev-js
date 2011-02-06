@@ -7,6 +7,16 @@ sets nickname
 
 { type = "cmd", name = "nick", arg = nick }
 
+1.5)
+
+-
+
+server
+
+broadcasts nick change
+
+{ type = "nickchange", id = playerId, nick = nick }
+
 2)
 -
 

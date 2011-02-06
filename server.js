@@ -61,6 +61,9 @@ function cmdHandler(message, client) {
 
         // add the invite to invites map
         invites[inviterId] = [acceptorId];
+
+        // send an invitation to the acceptor
+        socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
         console.log('player {0} has been invited to play with {1}'.format(acceptorNick, inviterNick));
         break;
 

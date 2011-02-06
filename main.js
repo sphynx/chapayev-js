@@ -1,5 +1,3 @@
-// Test!!
-
 var cs = 50; // cell size
 var rows = 8; // number of rows and columns
 var cr = cs/2 - 5; // radius of circle

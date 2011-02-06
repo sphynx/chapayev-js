@@ -4,13 +4,23 @@ var cr = cs/2 - 5; // radius of circle
 var bs = rows * cs; // board size
 var k = 1.3; // coefficient of "push-power"
 
-var host = 'eth0.net.ua';
-var port = 8124;
+var HOST = 'eth0.net.ua';
+var PORT = 8124;
 
 var R; // Raphael object
 var socket; // For connection to server
 
-var movingBalls = {};
+var input; // console input
+var output; // console output
+
+var movingBalls = {}; // for alternating moves implementation
+
+// commands
+var TYPE_COMMAND = "cmd";
+var CMD_NICK = "nick";
+var CMD_INVITE = "invite";
+var CMD_ACCEPT = "accept";
+var CMD_DECLINE = "decline";
 
 // KO model
 var model = {
@@ -19,6 +29,7 @@ var model = {
     redRow: 1,
     whiteRow: rows,
     status: ko.observable("disconnected"),
+    nick: ko.observable("set with /nick cmd"),
     whiteMove: ko.observable(true),
     moveInProgress: ko.observable(false)
 };
@@ -323,30 +334,6 @@ function makeClickListener(ball) {
     };
 }
 
-function init() {
-    R = Raphael("holder", 500, 500);
-
-    socket = new io.Socket(host, { port: port });
-    socket.connect();
-
-    socket.on(
-        'connect',
-        function() {
-            model.status("connected");
-        });
-
-    socket.on(
-        'message',
-        function(data) {
-            console.log("Received a message from the server!", data);
-        });
-
-    socket.on(
-        'disconnect',
-        function() {
-            console.log("The server has disconnected!");
-        });
-}
 
 function drawBoard() {
 
@@ -381,11 +368,103 @@ function drawBoard() {
     }
 }
 
+
+function send(dataStr) {
+    var message = parseCommand(dataStr);
+    if (message != null && message != undefined) {
+        socket.send(message);
+        output.append("\nclient: Sent object " + JSON.stringify(message));
+    } else {
+        output.append("\nclient: Syntax -- /&lt;command&gt; [arg1, arg2, ... ]");
+        output.append("\nclient: Commands available -- nick, invite, accept, decline");
+    }
+}
+
+function parseCommand(commandStr) {
+    var commandElements = commandStr.split(" ");
+    var message = null;
+    if (commandElements.length > 0 && commandElements[0].charAt(0) === '/') {
+        var commandName = commandElements[0].slice(1);
+        switch (commandName) {
+        case CMD_NICK:
+            if (commandElements[1] && commandElements[1].length > 0) {
+                var nick = commandElements[1];
+                message = { type : TYPE_COMMAND, name : CMD_NICK, arg : nick};
+                model.nick(nick);
+            }
+            break;
+
+        case CMD_INVITE:
+            if (commandElements[1] && commandElements[1].length > 0) {
+                message = { type : TYPE_COMMAND, name : CMD_INVITE, arg : commandElements[1] };
+            }
+            break;
+
+        case CMD_ACCEPT:
+            if (commandElements[1] && commandElements[1].length > 0) {
+                message = { type : TYPE_COMMAND, name : CMD_ACCEPT, arg : commandElements[1] };
+            }
+            break;
+
+        case CMD_DECLINE:
+            if (commandElements[1] && commandElements[1].length > 0) {
+                message = { type : TYPE_COMMAND, name : CMD_DECLINE, arg : commandElements[1] };
+            }
+            break;
+        }
+    }
+
+    return message;
+}
+
+function initUI() {
+    R = Raphael("holder", 500, 500);
+
+    input = $("#in");
+    output = $("#out");
+
+    input.focus();
+
+    input.keypress(
+        function(event) {
+            if (event.which == '13') {
+                var dataStr = input.val();
+                output.append("\nclient: " + dataStr);
+                send(dataStr);
+                input.val("");
+            }
+        }
+    );
+}
+
+function initSocket() {
+    socket = new io.Socket(HOST, { port: PORT });
+    socket.connect();
+
+    socket.on(
+        'connect',
+        function() {
+            model.status("connected");
+            output.append('\nsystem: connected');
+        });
+
+    socket.on(
+        'message',
+        function(msg) {
+            output.append('\nserver: ' + JSON.stringify(msg));
+        });
+
+    socket.on(
+        'disconnect',
+        function() {
+            output.append('\nsystem: disconnected');
+        });
+
+}
+
 $(function() {
-   init();
+   initUI();
+   initSocket();
    ko.applyBindings(model);
    drawBoard();
-   model.whiteMove(true);
-   model.moveInProgress(false);
 });
-

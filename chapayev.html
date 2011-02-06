@@ -12,7 +12,7 @@
     <script src="lib/raphael.js"></script>
     <script src="lib/sylvester.js"></script>
     <script src="lib/socket.io.js"></script>
-    
+
     <script src="main.js"></script>
 
   </head>
@@ -25,12 +25,21 @@
         Status:
         <span id="status" data-bind="text: status, css: {connected: status() == 'connected'}"></span>
       </div>
+      <div id="nick-block">
+        Nick:
+        <span id="nick" data-bind="text: nick"></span>
+      </div>
       <div id="current-block">
         Current move:
         <span id="currentMove" data-bind="text: currentMove, css: {red: currentMove() == 'red'}"></span>
       </div>
       <span id="redScore" class="score" data-bind="text: red().length"></span>
       <span id="whiteScore" class="score" data-bind="text: white().length"></span>
+    </div>
+
+    <div id="console">
+      <textarea id="out" class="control" readonly="true"></textarea> <br/>
+      <input type="text" id="in" class="control">
     </div>
 
   </body>

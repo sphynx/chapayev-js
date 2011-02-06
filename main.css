@@ -55,9 +55,6 @@ body {
     left: 1em;
 }
 
-.red { color: red; }
-.connected { color: green; }
-
 #console {
     width: 390px;
     height: 500px;
@@ -72,11 +69,11 @@ body {
     left: 0;
     right: 0;
     color: #fff;
-    background-color: #444;
-    border: 0px;
+    background-color: #333;
 }
 
-#out  {
+#out {
+    border: 0px;
     height: 450px;
     margin: 10px 10px;
 }

@@ -23,7 +23,7 @@
     <div id="info">
       <div id="status-block">
         Status:
-        <span id="status" data-bind="text: status, css: {connected: status() == 'connected'}"></span>
+        <span id="status" data-bind="text: status, style: {color: status() == 'connected' ? 'green' : 'red'}"></span>
       </div>
       <div id="nick-block">
         Nick:
@@ -31,7 +31,7 @@
       </div>
       <div id="current-block">
         Current move:
-        <span id="currentMove" data-bind="text: currentMove, css: {red: currentMove() == 'red'}"></span>
+        <span id="currentMove" data-bind="text: currentMove, style: {color: currentMove()}"></span>
       </div>
       <span id="redScore" class="score" data-bind="text: red().length"></span>
       <span id="whiteScore" class="score" data-bind="text: white().length"></span>

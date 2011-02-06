@@ -1,0 +1,112 @@
+1)
+/nick <nick>
+
+client
+
+sets nickname
+
+{ type = "cmd", name = "nick", arg = nick }
+
+2)
+-
+
+server
+
+list of players
+
+{ type = "playerslist", list = [p1, p2] }
+
+3)
+
+/invite <nick>
+
+client
+
+Initiates game request, sends a request to another player. He/she can accept or
+decline.
+
+{ type = "cmd", name = "invite", arg = nick }
+
+4)
+
+-
+
+server
+
+sends game request
+
+{ type = "gamerequest", from = nick }
+
+5)
+
+/accept <nick>
+
+client
+
+accepts a game request
+
+{ type = "cmd", name = "accept", arg = nick }
+
+6)
+
+/decline <nick>
+
+client
+
+declines a game request
+
+{ type = "cmd", name = "decline", arg = nick }
+
+7)
+
+-
+
+server
+
+notifies a client about other player's decline
+
+{ type = "decline", from = nick }
+
+8)
+
+-
+
+server
+
+initiate clients for game start
+
+{ type = "gamestart", player1 = nick, player2 = nick }
+
+9)
+
+-
+
+client
+
+player's move
+
+{ type = "move", piece = "w4", vector = [x, y] }
+// numeration from 1 (1 - 8)
+// w - white, r - red
+
+10)
+
+-
+
+server
+
+player's move (sent from server to client)
+
+{ type = "move", piece = "w4", vector = [x, y] }
+
+
+11)
+
+-
+
+client
+
+{ type = "gameresult", result = "win/lose/draw" }
+
+NB: consistent results should be sent from both clients
+

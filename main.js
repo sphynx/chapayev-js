@@ -10,23 +10,48 @@ var port = 8124;
 var R; // Raphael object
 var socket; // For connection to server
 
+var movingBalls = {};
+
 // KO model
 var model = {
     white: ko.observableArray([]),
     red: ko.observableArray([]),
-    whiteRow: 8,
     redRow: 1,
-    status: ko.observable("disconnected")
+    whiteRow: rows,
+    status: ko.observable("disconnected"),
+    whiteMove: ko.observable(true),
+    moveInProgress: ko.observable(false)
 };
+
 model.all = ko.dependentObservable(
     function() {
         return this.white().concat(this.red());
     }, model);
 
+model.currentMove = ko.dependentObservable(
+    function() {
+        return this.whiteMove() ? "white" : "red";
+    }, model);
+
+function changeMove() {
+    // flip move
+    model.whiteMove(!model.whiteMove());
+    model.moveInProgress(false);
+}
+
+function isAllowedToClick(team) {
+    return !model.moveInProgress() && model.currentMove() === team;
+}
+
 // utility functions
 var pow = Math.pow;
 function sqr(x) {
     return pow(x, 2);
+}
+
+function isEmpty(obj){
+    for (var i in obj) { return false; }
+    return true;
 }
 
 // given start position and velocity vector,
@@ -178,6 +203,9 @@ function startBall(ball, parentBall) {
     var pf = getStopPoint(p0, ball.vx, ball.vy);
     var pcb = getNearestCollisionPoint(p0, pf);
 
+    movingBalls[ball.name] = true;
+    model.moveInProgress(true);
+
     if (pcb) {
         var pc = pcb.point;
         var other = pcb.ball;
@@ -201,21 +229,35 @@ function startBall(ball, parentBall) {
         }
 
     } else {
-        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">",
-                     function() {
-                         if (this.attr("cx") < cs || this.attr("cx") > cs * (rows + 1)
-                          || this.attr("cy") < cs || this.attr("cy") > cs * (rows + 1)) {
-                             this.animate({"opacity": 0}, 400, "linear", function() {
-                                              if (this.team === "red") {
-                                                  model.red.remove(this);
-                                              } else {
-                                                  model.white.remove(this);
-                                              }
-                                              this.remove();
-                                          });
-                         }
-                     });
+        ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">", makeFinalCallback(ball));
     }
+}
+
+function makeFinalCallback(ball) {
+    return function() {
+        delete movingBalls[ball.name];
+        if (isEmpty(movingBalls)) {
+            changeMove();
+        }
+        if (isOutBoard(ball)) {
+            ball.animate({"opacity": 0}, 400, "linear",
+                         function() {
+                             if (ball.team === "red") {
+                                 model.red.remove(ball);
+                             } else {
+                                 model.white.remove(ball);
+                             }
+                             ball.remove();
+                         });
+        }
+    };
+}
+
+function isOutBoard(ball) {
+    return ball.attr("cx") < cs
+        || ball.attr("cx") > cs * (rows + 1)
+        || ball.attr("cy") < cs
+        || ball.attr("cy") > cs * (rows + 1);
 }
 
 function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
@@ -268,12 +310,16 @@ function getBallSpeed(e, box) {
 
 function makeClickListener(ball) {
     return function(e) {
-        // set ball velocity and start animation
-        var v = getBallSpeed(e, ball.getBBox());
-        ball.vx = v[0];
-        ball.vy = v[1];
 
-        startBall(ball);
+        if (isAllowedToClick(ball.team)) {
+
+            // set ball velocity and start animation
+            var v = getBallSpeed(e, ball.getBBox());
+            ball.vx = v[0];
+            ball.vy = v[1];
+
+            startBall(ball);
+        }
     };
 }
 
@@ -284,21 +330,21 @@ function init() {
     socket.connect();
 
     socket.on(
-        'connect', 
+        'connect',
         function() {
-            model.status('connected');
+            model.status("connected");
         });
 
     socket.on(
-        'message', 
+        'message',
         function(data) {
-            console.log('Received a message from the server!', data);
+            console.log("Received a message from the server!", data);
         });
 
     socket.on(
-        'disconnect', 
+        'disconnect',
         function() {
-            console.log('The server has disconnected!');
+            console.log("The server has disconnected!");
         });
 }
 
@@ -332,7 +378,6 @@ function drawBoard() {
         c.name = "w" + i;
         c.node.onclick = makeClickListener(c);
         model.white.push(c);
-
     }
 }
 
@@ -340,5 +385,7 @@ $(function() {
    init();
    ko.applyBindings(model);
    drawBoard();
+   model.whiteMove(true);
+   model.moveInProgress(false);
 });
 

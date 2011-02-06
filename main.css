@@ -32,21 +32,21 @@ body {
 
 #redScore {
     color: red;
-    margin-top: -190px;
+    margin-top: -90px;
 }
 
 #whiteScore {
     color: white;
-    margin-top: 120px;
-}
-
-#status {
-    color: white;
+    margin-top: 20px;
 }
 
 #status-block {
     padding: 1em 1em;
 }
 
+#current-block {
+    padding-left: 1em;
+}
+
+.red { color: red; }
 .connected { color: green; }
-.disconnected { color: red; }

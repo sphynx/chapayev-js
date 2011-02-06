@@ -97,13 +97,13 @@ function cmdHandler(message, client) {
 socket.on(
     'connection',
     function(client) {
-        // Send to the new user the list of active players
-        client.send({ type: 'playerslist', list: players });
-
         // Add the new user to the list of players
         var generatedNick = 'anonymous' + Date.now();
         players[client.sessionId] = { nick: generatedNick};
         nicks[generatedNick] = client.sessionId;
+
+        // Send to the new user the list of active players
+        client.send({ type: 'playerslist', list: players });
 
         // Broadcast the new user to all players
         socket.broadcast({ type: 'new', id: client.sessionId }, [client.sessionId]);
@@ -130,7 +130,7 @@ socket.on(
                 delete players[this.sessionId];
 
                 // Broadcast the logged out user's id
-                socket.broadcast({ type: 'leave', id: this.sessionId });
+                socket.broadcast({ type: 'left', id: this.sessionId });
             });
     });
 

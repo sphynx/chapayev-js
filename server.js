@@ -1,42 +1,70 @@
 var http = require('http'),
-    io = require('socket.io'),
-    players = {},
-    nicks = {},
-    games = {},
-    invites = {};
+    io = require('socket.io');
+
+// data structures for storing players, games, game proposal, etc.
+var players = {}, // map: client.sessionId -> player object
+    nicks = {},   // map: player nickname  -> client.sessionId (opposite to players)
+    invites = {}, // map: player id -> list of issued invitations by this player (other player ids)
+    games = {};   // TODO
 
 // setup socket and server
 var server = http.createServer();
 var socket = io.listen(server);
 
+// util function for easy formatting
+String.prototype.format = function() {
+    var formatted = this;
+    for (arg in arguments) {
+        formatted = formatted.replace("{" + arg + "}", arguments[arg]);
+    }
+    return formatted;
+};
+
+function nickById(id) {
+    return players[id] && players[id].nick;
+}
+
+function idByNick(nick) {
+    return nicks[nick];
+}
+
 function cmdHandler(message, client) {
     var cmdName = message.name;
-    var nick;
     var id = client.sessionId;
 
     console.log('got cmd: ' + cmdName);
 
     switch (cmdName) {
-        case 'nick':
-        nick = message.arg;
-        var oldNick = players[id].nick;
-        players[id].nick = nick;
+    case 'nick':
+        var newNick = message.arg;
+        var oldNick = nickById(id);
+
+        // update player's nick
+        players[id].nick = newNick;
+
+        // update nick-to-id map
         delete nicks[oldNick];
-        nicks[nick] = client.sessionId;
-        console.log('nick has been changed from ' + oldNick + ' to ' + nick + ' for player ' + id);
-        socket.broadcast({ type: 'nickchange', id: id, oldNick: oldNick, newNick: nick });
+        nicks[newNick] = id;
+
+        console.log('nick has been changed from {0} to {1} for player {2}'.format(oldNick, newNick, id));
+        socket.broadcast({ type: 'nickchange', id: id, oldNick: oldNick, newNick: newNick });
         break;
 
-        case 'invite':
-        var inviteeNick = message.arg;
-        var inviterNick = players[id].nick;
-        var inviteeId = nicks[inviteeNick];
+    case 'invite':
+        // inviter -- a player issuing a game request (proposing to play)
         var inviterId = id;
-        invites[inviterId] = [inviteeId];
-        console.log('player ' + inviteeNick + ' has been invited to play with ' + inviterNick);
+        var inviterNick = nickById(id);
+
+        // acceptor -- a player who may or may not accept the request (target of request)
+        var acceptorNick = message.arg;
+        var acceptorId = idByNick(acceptorNick);
+
+        // add the invite to invites map
+        invites[inviterId] = [acceptorId];
+        console.log('player {0} has been invited to play with {1}'.format(acceptorNick, inviterNick));
         break;
 
-        default:
+    default:
         console.log('no such cmd defined yet: ' + cmdName);
     };
 }

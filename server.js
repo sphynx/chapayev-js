@@ -1,6 +1,9 @@
 var http = require('http'),
     io = require('socket.io'),
-    players = {};
+    players = {},
+    nicks = {},
+    games = {},
+    invites = {};
 
 // setup socket and server
 var server = http.createServer();
@@ -8,13 +11,29 @@ var socket = io.listen(server);
 
 function cmdHandler(message, client) {
     var cmdName = message.name;
+    var nick;
+    var id = client.sessionId;
+
     console.log('got cmd: ' + cmdName);
+
     switch (cmdName) {
         case 'nick':
-        var nick = message.arg;
-        players[client.sessionId].nick = nick;
-        console.log('nick has been changed to ' + nick + ' for player ' + client.sessionId);
-        socket.broadcast({ type: 'nickchange', id: client.sessionId, nick: nick });
+        nick = message.arg;
+        var oldNick = players[id].nick;
+        players[id].nick = nick;
+        delete nicks[oldNick];
+        nicks[nick] = client.sessionId;
+        console.log('nick has been changed from ' + oldNick + ' to ' + nick + ' for player ' + id);
+        socket.broadcast({ type: 'nickchange', id: id, oldNick: oldNick, newNick: nick });
+        break;
+
+        case 'invite':
+        var inviteeNick = message.arg;
+        var inviterNick = players[id].nick;
+        var inviteeId = nicks[inviteeNick];
+        var inviterId = id;
+        invites[inviterId] = [inviteeId];
+        console.log('player ' + inviteeNick + ' has been invited to play with ' + inviterNick);
         break;
 
         default:
@@ -30,7 +49,9 @@ socket.on(
         client.send({ type: 'playerslist', list: players });
 
         // Add the new user to the list of players
-        players[client.sessionId] = { nick: 'anonymous' };
+        var generatedNick = 'anonymous' + Date.now();
+        players[client.sessionId] = { nick: generatedNick};
+        nicks[generatedNick] = client.sessionId;
 
         // Broadcast the new user to all players
         socket.broadcast({ type: 'new', id: client.sessionId }, [client.sessionId]);

@@ -15,7 +15,7 @@ server
 
 broadcasts nick change
 
-{ type = "nickchange", id = playerId, nick = nick }
+{ type = "nickchange", id = playerId, oldNick = nick, newNick = nick }
 
 2)
 -
@@ -24,7 +24,7 @@ server
 
 list of players
 
-{ type = "playerslist", list = [p1, p2] }
+{ type = "playerslist", list = players (object) }
 
 3)
 
@@ -120,3 +120,11 @@ client
 
 NB: consistent results should be sent from both clients
 
+
+12)
+
+-
+
+server
+
+{ type = "newplayer",

@@ -1,14 +1,39 @@
 var input;
 var output;
 
-var host = 'eth0.net.ua';
-var port = 8124;
+var HOST = 'eth0.net.ua';
+var PORT = 8124;
+
+var TYPE_COMMAND = "cmd";
+var CMD_NICK = "nick";
 
 var socket;
 
 function send(dataStr) {
-    var data = JSON.parse(dataStr);
-    socket.send(data);
+    var message = parseCommand(dataStr);
+    output.append(JSON.stringify(message));
+    if (message != null && message != undefined) {
+        socket.send(message);
+    } else {
+        // TODO: show help
+    }
+}
+
+function parseCommand(commandStr) {
+    var commandElements = commandStr.split(" ");
+    var message = null;
+    if (commandElements.length > 0 && commandElements[0].charAt(0) === '/') {
+        var commandName = commandElements[0].slice(1);
+        switch (commandName) {
+        case "nick":
+            if (commandElements[1] && commandElements[1].length > 0) {
+                message = { type : TYPE_COMMAND, name : CMD_NICK, arg : commandElements[1] };
+            }
+            break;
+        }
+    }
+
+    return message;
 }
 
 function uiInit() {
@@ -20,7 +45,7 @@ function uiInit() {
     input.keypress(
         function(event) { 
             if (event.which == '13') {
-                var dataStr = "{" + input.val() + "}";
+                var dataStr = input.val();
                 send(dataStr);
                 output.append("\nclient: " + dataStr);
                 input.val("");
@@ -30,7 +55,7 @@ function uiInit() {
 }
 
 function socketInit() {
-    socket = new io.Socket(host, { port: port });
+    socket = new io.Socket(HOST, { port: PORT });
     socket.connect();
 
     socket.on(

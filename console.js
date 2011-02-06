@@ -11,9 +11,9 @@ var socket;
 
 function send(dataStr) {
     var message = parseCommand(dataStr);
-    output.append(JSON.stringify(message));
     if (message != null && message != undefined) {
         socket.send(message);
+        output.append("\nclient: Sent object " + JSON.stringify(message));
     } else {
         // TODO: show help
     }
@@ -46,8 +46,8 @@ function uiInit() {
         function(event) { 
             if (event.which == '13') {
                 var dataStr = input.val();
-                send(dataStr);
                 output.append("\nclient: " + dataStr);
+                send(dataStr);
                 input.val("");
             }
         } 

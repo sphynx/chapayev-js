@@ -445,7 +445,7 @@ function initSocket() {
         'connect',
         function() {
             model.status("connected");
-            output.append('\nsystem: connected');
+            output.append('system: connected');
         });
 
     socket.on(

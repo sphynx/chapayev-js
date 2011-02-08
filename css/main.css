@@ -20,33 +20,40 @@ body {
     left: 580px;
     top: 50px;
     border: 3px dashed #fff;
+    text-align: center;
 }
 
 .score {
     font-size: 4em;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    margin-left: -20px;
+    display: block;
+}
+
+.nick {
+    font-size: 2em;
+    display: block;
+}
+
+#redNick {
+    color: red;
+    margin-top: 140px;
+}
+
+#whiteNick {
+    color: white;
 }
 
 #redScore {
     color: red;
-    margin-top: -90px;
 }
 
 #whiteScore {
     color: white;
-    margin-top: 20px;
 }
 
 #status-block {
-    padding-top: 1em;
-    padding-left: 1em;
-}
-
-#nick-block {
-    padding-left: 1em;
+    position: absolute;
+    top: 1em;
+    left: 1em;
 }
 
 #current-block {

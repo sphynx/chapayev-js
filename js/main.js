@@ -18,7 +18,8 @@
          CMD_NICK = "nick",
          CMD_INVITE = "invite",
          CMD_ACCEPT = "accept",
-         CMD_DECLINE = "decline";
+         CMD_DECLINE = "decline",
+         CMD_RESET = "reset";
 
      // private utility functions which don't depend on state:
 
@@ -104,6 +105,10 @@
                      message = { type: TYPE_COMMAND, name: CMD_DECLINE, arg: commandElements[1] };
                  }
                  break;
+
+             case CMD_RESET:
+                 message = { type: TYPE_COMMAND, name: CMD_RESET};
+                 break;
              }
          }
 
@@ -140,6 +145,13 @@
 
              isAllowedToClick: function(team) {
                  return !this.moveInProgress() && this.currentMove() === team;
+             },
+
+             reset: function() {
+                 this.white([]);
+                 this.red([]);
+                 this.whiteMove(true);
+                 this.moveInProgress(false);
              }
          };
 
@@ -200,6 +212,7 @@
          // 2) final callback: current ball stopped without any collision, so it
          //    should be checked whether it's out of the board and removed if so.
 
+         // first case
          function makeStopCallback(ball) {
              return function() {
                  delete movingBalls[ball.name];
@@ -222,6 +235,7 @@
              };
          }
 
+         // second case of callback described above
          function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
              return function() {
                  // resolve collision, that is
@@ -247,8 +261,7 @@
 
          // UI stuff:
          function drawBoard() {
-             var i, x, c,
-                 path = "";
+             var i, path = "";
 
              // 8x8 grid with path lines
              for (i = 1; i <= ROWS + 1; i++) {
@@ -258,26 +271,42 @@
              path += "z";
              raphael.path(path).attr("stroke-width", 1);
 
-             // setup red and white pieces, push them into model
+         }
+
+         function resetPieces() {
+             var i, piece, x, y;
+
+             // clean all the pieces and reset model
+             for (i = 0; i < model.all().length; i++) {
+                 model.all()[i].remove();
+             }
+             model.reset();
+             movingBalls = {};
+
+             // setup new red and white pieces, push them into model
              for (i = 1; i <= ROWS; i++) {
                  x = CELL_SIZE * i + CELL_SIZE / 2;
 
-                 // red circle
-                 c = raphael.circle(x, 1/2 * CELL_SIZE + (model.redRow * CELL_SIZE), RADIUS).attr("stroke-width", 3);
-                 c.attr("fill", "red");
-                 c.team = "red";
-                 c.name = "r" + i;
-                 c.node.onclick = makeClickListener(c);
-                 model.red.push(c);
+                 // red piece
+                 y = 1/2 * CELL_SIZE + (model.redRow * CELL_SIZE);
+                 piece = raphael.circle(x, y, RADIUS).attr("stroke-width", 3);
+                 piece.attr("fill", "red");
+                 piece.team = "red";
+                 piece.name = "r" + i;
+                 piece.node.onclick = makeClickListener(piece);
+                 model.red.push(piece);
 
-                 // white circle
-                 c = raphael.circle(x, 1/2 * CELL_SIZE + (model.whiteRow * CELL_SIZE), RADIUS).attr("stroke-width", 3);
-                 c.attr("fill", "white");
-                 c.team = "white";
-                 c.name = "w" + i;
-                 c.node.onclick = makeClickListener(c);
-                 model.white.push(c);
+                 // white piece
+                 y = 1/2 * CELL_SIZE + (model.whiteRow * CELL_SIZE);
+                 piece = raphael.circle(x, y, RADIUS).attr("stroke-width", 3);
+                 piece.attr("fill", "white");
+                 piece.team = "white";
+                 piece.name = "w" + i;
+                 piece.node.onclick = makeClickListener(piece);
+                 model.white.push(piece);
              }
+
+             collisionResolver = CH_CollisionResolver(model.all(), RADIUS);
          }
 
          function makeClickListener(ball) {
@@ -308,21 +337,26 @@
                      if (event.which == '13') {
                          var dataStr = input.val();
                          output.append("\nclient: " + dataStr);
+                         input.val("");
 
                          var message = parseCommand(dataStr);
                          if (message != null && message != undefined) {
                              // update nick on UI
-                             if (message.name === CMD_NICK) {
+                             switch (message.name) {
+                             case CMD_NICK:
                                  model.nick(message.arg);
+                                 break;
+
+                             case CMD_RESET:
+                                 resetPieces();
+                                 return; // don't need to send to the server
                              }
                              socket.send(message);
                              output.append("\nclient: Sent object " + JSON.stringify(message));
                          } else {
-                             output.append("\nclient: Syntax -- /&lt;command&gt; [arg1, arg2, ... ]");
-                             output.append("\nclient: Commands available -- nick, invite, accept, decline");
+                             output.append("\nclient: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
+                             output.append("\nclient: Commands available -- nick, invite, accept, decline, reset");
                          }
-
-                         input.val("");
                      }
                  }
              );
@@ -354,7 +388,7 @@
              initSocket();
              ko.applyBindings(model);
              drawBoard();
-             collisionResolver = CH_CollisionResolver(model.all(), RADIUS);
+             resetPieces();
          }
 
          // public interface

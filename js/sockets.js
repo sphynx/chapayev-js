@@ -1,13 +1,7 @@
 (function() {
      var global = this;
 
-     function log(msg) {
-         if (typeof console !== "undefined") {
-             console.log(msg);
-         } else {
-             alert(msg);
-         }
-     }
+     var log = DS_utils.log;
 
      global.CH_Socket = function(host, port, handlers) {
 
@@ -27,6 +21,7 @@
              log("disconnected");
          }
 
+         // main connect function
          function connect() {
              // using socket.io sockets as implementation
              socket = new io.Socket(host, { port: port });
@@ -46,7 +41,7 @@
          }
 
          function send(msg) {
-             socket.send(message);
+             socket.send(msg);
          }
 
          return {

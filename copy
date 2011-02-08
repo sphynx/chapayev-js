@@ -1,1 +1,1 @@
-scp server.js sphynx@eth0.net.ua:js/
+scp js/server.js sphynx@eth0.net.ua:js/

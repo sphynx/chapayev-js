@@ -118,6 +118,10 @@ socket.on(
                     cmdHandler(message, client);
                     break;
 
+                    case "move":
+                    client.broadcast(message, [client.sessionId]);
+                    break;
+
                     default:
                     console.log('no handler specified yet for message.type = ' + message.type);
                 }

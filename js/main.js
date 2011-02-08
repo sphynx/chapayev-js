@@ -134,9 +134,11 @@
              redRow: 1,
              whiteRow: ROWS,
              status: ko.observable("disconnected"),
-             nick: ko.observable("set with /nick cmd"),
+             whiteNick: ko.observable("guest"),
+             redNick: ko.observable("guest"),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
+             multiplayer: ko.observable(false),
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -152,6 +154,16 @@
                  this.red([]);
                  this.whiteMove(true);
                  this.moveInProgress(false);
+             },
+
+             ballByName: function(name) {
+                 for (var i = 0; i < this.all().length; i++) {
+                     var b = this.all()[i];
+                     if (b.name === name) {
+                         return b;
+                     }
+                 }
+                 return null;
              }
          };
 
@@ -318,6 +330,10 @@
                      ball.vx = v[0];
                      ball.vy = v[1];
 
+                     if (model.multiplayer()) {
+                         socket.send({ type: "move", piece: ball.name, vector: [ball.vx, ball.vy]});
+                     }
+
                      startBall(ball);
                  }
              };
@@ -344,7 +360,8 @@
                              // update nick on UI
                              switch (message.name) {
                              case CMD_NICK:
-                                 model.nick(message.arg);
+                                 model.whiteNick(message.arg);
+                                 model.redNick(message.arg);
                                  break;
 
                              case CMD_RESET:
@@ -372,6 +389,23 @@
 
              handlers.message = function(msg) {
                  output.append('\nserver: ' + JSON.stringify(msg));
+                 switch (msg.type) {
+                 case "gamestart":
+                     resetPieces();
+                     model.whiteNick(msg.player1);
+                     model.redNick(msg.player2);
+                     model.multiplayer(true);
+                     break;
+
+                 case "move":
+                     var ball = model.ballByName(msg.piece);
+                     if (ball) {
+                         ball.vx = msg.vector[0];
+                         ball.vy = msg.vector[1];
+                         startBall(ball);
+                     }
+                     break;
+                 }
              };
 
              handlers.disconnect = function() {

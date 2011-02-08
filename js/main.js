@@ -20,7 +20,7 @@
          CMD_ACCEPT = "accept",
          CMD_DECLINE = "decline";
 
-     // utility functions, don't depend on state:
+     // private utility functions which don't depend on state:
 
      // given start position and velocity vector,
      // calculates the position where a piece stops
@@ -84,7 +84,6 @@
                  if (commandElements[1] && commandElements[1].length > 0) {
                      var nick = commandElements[1];
                      message = { type: TYPE_COMMAND, name: CMD_NICK, arg: nick};
-                     model.nick(nick);
                  }
                  break;
 
@@ -113,7 +112,6 @@
 
      // constructor, available in global namespace
      global.CH_Game = function() {
-
          // private instance variable
          var raphael, // Raphael object
              socket, // For connection to server
@@ -124,9 +122,43 @@
              movingBalls = {}, // for alternating moves implementation
              collisionResolver;
 
+         // Knockout.js model object
+         var model = {
+             white: ko.observableArray([]),
+             red: ko.observableArray([]),
+             redRow: 1,
+             whiteRow: ROWS,
+             status: ko.observable("disconnected"),
+             nick: ko.observable("set with /nick cmd"),
+             whiteMove: ko.observable(true),
+             moveInProgress: ko.observable(false),
+
+             changeMove: function() {
+                 this.whiteMove(!this.whiteMove());
+                 this.moveInProgress(false);
+             },
+
+             isAllowedToClick: function(team) {
+                 return !this.moveInProgress() && this.currentMove() === team;
+             }
+         };
+
+         // dependent observable should be defined separately, alas.
+         // see KO documentation for the gory details
+         model.all = ko.dependentObservable(
+             function() {
+                 return this.white().concat(this.red());
+             }, model);
+
+         model.currentMove = ko.dependentObservable(
+             function() {
+                 return this.whiteMove() ? "white" : "red";
+             }, model);
+
+         // private functions:
+
          // start animation
          function startBall(ball, parentBall) {
-
              var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
              var pf = getStopPoint(p0, ball.vx, ball.vy);
              var pcb = collisionResolver.nearest(p0, pf);
@@ -175,15 +207,17 @@
                      model.changeMove();
                  }
                  if (isOutOfBoard(ball)) {
-                     ball.animate({"opacity": 0}, 400, "linear",
-                                  function() {
-                                      if (ball.team === "red") {
-                                          model.red.remove(ball);
-                                      } else {
-                                          model.white.remove(ball);
-                                      }
-                                      ball.remove();
-                                  });
+                     ball.animate(
+                         {"opacity": 0}, 400, "linear",
+                         function() {
+                             if (ball.team === "red") {
+                                 model.red.remove(ball);
+                             } else {
+                                 model.white.remove(ball);
+                             }
+                             ball.remove();
+                         }
+                     );
                  }
              };
          }
@@ -213,22 +247,22 @@
 
          // UI stuff:
          function drawBoard() {
-
-             var i, x, c;
-             var p = "";
+             var i, x, c,
+                 path = "";
 
              // 8x8 grid with path lines
              for (i = 1; i <= ROWS + 1; i++) {
-                 p += "M" + (CELL_SIZE * i) + " " + CELL_SIZE + "v" + BOARD_SIZE;
-                 p += "M" + CELL_SIZE + " "  + CELL_SIZE * i + "h" + BOARD_SIZE;
+                 path += "M" + (CELL_SIZE * i) + " " + CELL_SIZE + "v" + BOARD_SIZE;
+                 path += "M" + CELL_SIZE + " "  + CELL_SIZE * i + "h" + BOARD_SIZE;
              }
-             p += "z";
-             raphael.path(p).attr("stroke-width", 1);
+             path += "z";
+             raphael.path(path).attr("stroke-width", 1);
 
-             // setup balls
+             // setup red and white pieces, push them into model
              for (i = 1; i <= ROWS; i++) {
                  x = CELL_SIZE * i + CELL_SIZE / 2;
 
+                 // red circle
                  c = raphael.circle(x, 1/2 * CELL_SIZE + (model.redRow * CELL_SIZE), RADIUS).attr("stroke-width", 3);
                  c.attr("fill", "red");
                  c.team = "red";
@@ -236,6 +270,7 @@
                  c.node.onclick = makeClickListener(c);
                  model.red.push(c);
 
+                 // white circle
                  c = raphael.circle(x, 1/2 * CELL_SIZE + (model.whiteRow * CELL_SIZE), RADIUS).attr("stroke-width", 3);
                  c.attr("fill", "white");
                  c.team = "white";
@@ -247,7 +282,6 @@
 
          function makeClickListener(ball) {
              return function(e) {
-
                  if (model.isAllowedToClick(ball.team)) {
 
                      // set ball velocity and start animation
@@ -277,6 +311,10 @@
 
                          var message = parseCommand(dataStr);
                          if (message != null && message != undefined) {
+                             // update nick on UI
+                             if (message.name === CMD_NICK) {
+                                 model.nick(message.arg);
+                             }
                              socket.send(message);
                              output.append("\nclient: Sent object " + JSON.stringify(message));
                          } else {
@@ -291,7 +329,6 @@
          }
 
          function initSocket() {
-
              var handlers = {};
 
              handlers.connect = function() {
@@ -315,6 +352,7 @@
          function init() {
              initUI();
              initSocket();
+             ko.applyBindings(model);
              drawBoard();
              collisionResolver = CH_CollisionResolver(model.all(), RADIUS);
          }
@@ -327,43 +365,9 @@
 
 })();
 
-// Knockout.js model object
-var model = {
-    white: ko.observableArray([]),
-    red: ko.observableArray([]),
-    redRow: 1,
-    whiteRow: 8,
-    status: ko.observable("disconnected"),
-    nick: ko.observable("set with /nick cmd"),
-    whiteMove: ko.observable(true),
-    moveInProgress: ko.observable(false),
-
-    changeMove: function() {
-        this.whiteMove(!this.whiteMove());
-        this.moveInProgress(false);
-    },
-
-    isAllowedToClick: function(team) {
-        return !this.moveInProgress() && this.currentMove() === team;
-    }
-};
-
-// dependent observable should be defined separately, alas.
-// see KO documentation for the gory details
-model.all = ko.dependentObservable(
-    function() {
-        return this.white().concat(this.red());
-    }, model);
-
-model.currentMove = ko.dependentObservable(
-    function() {
-        return this.whiteMove() ? "white" : "red";
-    }, model);
-
 // main entry point wrapped in jQuery $(...)
 $(
     function() {
-        ko.applyBindings(model);
         CH_Game().init();
     }
 );

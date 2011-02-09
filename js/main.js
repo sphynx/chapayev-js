@@ -2,6 +2,8 @@
      // to make global context more apparent
      var global = this;
 
+     var log = DS_utils.log;
+
      // constants
      var CELL_SIZE = 50, // board cell size
          ROWS = 8, // number of board rows and columns
@@ -183,8 +185,12 @@
 
          // start animation
          function startBall(ball, parentBall) {
-             var p0 = $V([ball.attr("cx"), ball.attr("cy")]);
+             var cx = ball.attr("cx");
+             var cy = ball.attr("cy");
+             log("starting ball {0} located in ({1}, {2})", ball.name, cx, cy);
+             var p0 = $V([cx, cy]);
              var pf = getStopPoint(p0, ball.vx, ball.vy);
+             log("end point for {0} located in ({1}, {2})", ball.name, pf.e(1), pf.e(2));
              var pcb = collisionResolver.nearest(p0, pf);
 
              movingBalls[ball.name] = true;
@@ -192,6 +198,7 @@
 
              if (pcb) {
                  var pc = pcb.point;
+                 log("collision predicted for ball {0} in ({1}, {2})", ball.name, pc.e(1), pc.e(2));
                  var other = pcb.ball;
                  var ratio = getRatio(p0, pc, pf);
                  var timeRatio = 1 - Math.pow(1 - ratio, 1/3);
@@ -204,15 +211,18 @@
                  };
 
                  if (parentBall) {
+                     log("animation synced with {0} started", parentBall.name);
                      ball.animateWith(parentBall, {cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, easingId,
                                       makeCollisionCallback(p0, pc, pf, ball, other, ratio));
 
                  } else {
+                     log("non-synced animation started");
                      ball.animate({cx: pc.e(1), cy: pc.e(2)}, 1000 * timeRatio, easingId,
                                   makeCollisionCallback(p0, pc, pf, ball, other, ratio));
                  }
 
              } else {
+                 log("no collisions for ball {0}, going straight to ({1}, {2})", ball.name, pf.e(1), pf.e(2));
                  ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">", makeStopCallback(ball));
              }
          }
@@ -227,11 +237,13 @@
          // first case
          function makeStopCallback(ball) {
              return function() {
+                 log("ball {0} stopped at ({1}, {2})", ball.name, ball.attr("cx"), ball.attr("cy"));
                  delete movingBalls[ball.name];
                  if (DS_utils.isEmpty(movingBalls)) {
                      model.changeMove();
                  }
                  if (isOutOfBoard(ball)) {
+                     log("hiding ball {0}", ball.name);
                      ball.animate(
                          {"opacity": 0}, 400, "linear",
                          function() {
@@ -250,11 +262,18 @@
          // second case of callback described above
          function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
              return function() {
+                 log("collision!");
+
                  // resolve collision, that is
                  // find out velocity vectors of both balls after the collision
                  var v = $V([ball.vx, ball.vy]);
+
+                 log("velocity before collision is ({0}, {1})", ball.vx, ball.vy);
+
                  var q = $V([other.attr("cx"), other.attr("cy")]);
                  var resolved = collisionResolver.resolve(pc, v, q, ratio);
+
+                 log("collision point is ({0}, {1})", pc.e(1), pc.e(2));
 
                  // remove easing function used in this animation
                  delete Raphael.easing_formulas[mkEasingName(ratio)];
@@ -264,6 +283,9 @@
                  ball.vy = resolved.p.e(2);
                  other.vx = resolved.q.e(1);
                  other.vy = resolved.q.e(2);
+
+                 log("resolved collision: this ball vx = {0}, vy = {1}, other ball vx = {2}, vy = {3}",
+                     ball.vx, ball.vy, other.vx, other.vy);
 
                  // start ball again
                  startBall(other);
@@ -329,6 +351,8 @@
                      var v = getBallSpeed(e, ball.getBBox());
                      ball.vx = v[0];
                      ball.vy = v[1];
+
+                     log("mouse clicked: ball {0}, vx = {1}, vy = {2}", ball.name, ball.vx, ball.vy);
 
                      if (model.multiplayer()) {
                          socket.send({ type: "move", piece: ball.name, vector: [ball.vx, ball.vy]});

@@ -76,12 +76,13 @@ function cmdHandler(message, client) {
 
         if ((inviterId in invites) && invites[inviterId].indexOf(acceptorId) !== -1) {
             console.log('player {0} has accepted invitation from player {1}'.format(acceptorNick, inviterNick));
+            var gameStartAcceptorMsg = { type: "gamestart", opponent: inviterNick, color: "red" };
+            var gameStartInviterMsg =  { type: "gamestart", opponent: acceptorNick, color: "white" };
             // two guys are paired, let's start the game!
             // send to acceptor
-            var gameStartMsg = { type: "gamestart", player1: inviterNick, player2: acceptorNick };
-            client.send(gameStartMsg);
+            client.send(gameStartAcceptorMsg);
             // send to inviter
-            socket.clients[inviterId].send(gameStartMsg);
+            socket.clients[inviterId].send(gameStartInviterMsg);
         } else {
             console.log('false accept from '.format(acceptorNick));
         }

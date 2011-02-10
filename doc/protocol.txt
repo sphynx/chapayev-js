@@ -85,7 +85,7 @@ server
 
 initiate clients for game start
 
-{ type = "gamestart", player1 = nick, player2 = nick }
+{ type = "gamestart", opponent = nick, color = yourcolor }
 
 9)
 

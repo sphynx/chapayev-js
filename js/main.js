@@ -141,7 +141,8 @@
              redNick: ko.observable("guest"),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
-             multiplayer: ko.observable(true),
+             multiplayer: ko.observable(false),
+             currentColor: ko.observable("white"),
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -149,7 +150,9 @@
              },
 
              isAllowedToClick: function(team) {
-                 return !this.moveInProgress() && this.currentMove() === team;
+                 return !this.moveInProgress()
+                     && this.currentMove() === team
+                     && (!this.multiplayer() || this.currentColor() === team);
              },
 
              reset: function() {
@@ -429,8 +432,12 @@
                  switch (msg.type) {
                  case "gamestart":
                      resetPieces();
-                     model.whiteNick(msg.player1);
-                     model.redNick(msg.player2);
+                     model.currentColor(msg.color);
+                     if (msg.color == "white") {
+                         model.redNick(msg.opponent);
+                     } else {
+                         model.whiteNick(msg.opponent);
+                     }
                      model.multiplayer(true);
                      break;
 

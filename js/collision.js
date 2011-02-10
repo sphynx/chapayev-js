@@ -41,7 +41,8 @@
              var collision = p0.add(dp.x(t));
 
              // 0.005 is used here to handle minor errors
-             return (t >= -0.005 && t <= 1) ? collision : null;
+             //return (t >= -0.005 && t <= 1) ? collision : null;
+             return (t > 0 && t < 1) ? collision : null;
          }
 
          // check all the balls to find whether they collide with given ball
@@ -91,7 +92,7 @@
          // Implementation is based on article
          // "Elastic Collisions Using Vectors instead of Trigonometry"
          // http://www.vobarian.com/collisions/
-         function resolveCollision(pc, pv, q, ratio) {
+         function resolveCollision(pc, pv, q) {
 
              var x = pc;
              var y = q;
@@ -132,8 +133,8 @@
              var v2_new = v2n_new.add(v2t_new);
 
              return {
-                 p: v1_new.x(1 - ratio),
-                 q: v2_new.x(1 - ratio)
+                 p: v1_new,
+                 q: v2_new
              };
          };
 

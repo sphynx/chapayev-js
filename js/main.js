@@ -140,7 +140,7 @@
              redNick: ko.observable("guest"),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
-             multiplayer: ko.observable(false),
+             multiplayer: ko.observable(true),
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -223,7 +223,7 @@
 
              } else {
                  log("no collisions for ball {0}, going straight to ({1}, {2})", ball.name, pf.e(1), pf.e(2));
-                 ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">", makeStopCallback(ball));
+                 ball.animate({cx: pf.e(1), cy: pf.e(2)}, 1000, ">", makeStopCallback(ball, pf));
              }
          }
 
@@ -235,9 +235,14 @@
          //    should be checked whether it's out of the board and removed if so.
 
          // first case
-         function makeStopCallback(ball) {
+         function makeStopCallback(ball, pf) {
              return function() {
                  log("ball {0} stopped at ({1}, {2})", ball.name, ball.attr("cx"), ball.attr("cy"));
+
+                 log("adjusting to real stop point({0}, {1})", pf.e(1), pf.e(2));
+                 ball.attr({cx: pf.e(1), cy: pf.e(2)});
+                 log("adjusted: current ball position is ({0}, {1})", ball.attr("cx"), ball.attr("cy"));
+
                  delete movingBalls[ball.name];
                  if (DS_utils.isEmpty(movingBalls)) {
                      model.changeMove();
@@ -262,18 +267,22 @@
          // second case of callback described above
          function makeCollisionCallback(p0, pc, pf, ball, other, ratio) {
              return function() {
-                 log("collision!");
+                 log("collision between {0} and {1}!", ball.name, other.name);
 
-                 // resolve collision, that is
-                 // find out velocity vectors of both balls after the collision
-                 var v = $V([ball.vx, ball.vy]);
+                 log("collision point for {0} is ({1}, {2})", ball.name, pc.e(1), pc.e(2));
+                 log("adjusting to real collision point({0}, {1})", pc.e(1), pc.e(2));
+                 ball.attr({cx: pc.e(1), cy: pc.e(2)});
+                 log("adjusted: current ball position is ({0}, {1})", ball.attr("cx"), ball.attr("cy"));
 
-                 log("velocity before collision is ({0}, {1})", ball.vx, ball.vy);
+                 // current velocity: multiplied on (1 - ratio) as we consider friction, 
+                 // therefore speed is constantly reducing all along the path
+                 var v = $V([ball.vx * (1 - ratio), ball.vy * (1 - ratio)]);
+
+                 log("velocity of {0} before collision is ({1}, {2})", ball.name, ball.vx, ball.vy);
 
                  var q = $V([other.attr("cx"), other.attr("cy")]);
-                 var resolved = collisionResolver.resolve(pc, v, q, ratio);
-
-                 log("collision point is ({0}, {1})", pc.e(1), pc.e(2));
+                 log("position of {0} during collision is ({1}, {2})", other.name, q.e(1), q.e(2));
+                 var resolved = collisionResolver.resolve(pc, v, q);
 
                  // remove easing function used in this animation
                  delete Raphael.easing_formulas[mkEasingName(ratio)];
@@ -284,8 +293,8 @@
                  other.vx = resolved.q.e(1);
                  other.vy = resolved.q.e(2);
 
-                 log("resolved collision: this ball vx = {0}, vy = {1}, other ball vx = {2}, vy = {3}",
-                     ball.vx, ball.vy, other.vx, other.vy);
+                 log("after collision. This ball {0}: vx = {1}, vy = {2}, other ball {3}: vx = {4}, vy = {5}",
+                     ball.name, ball.vx, ball.vy, other.name, other.vx, other.vy);
 
                  // start ball again
                  startBall(other);
@@ -422,6 +431,7 @@
                      break;
 
                  case "move":
+                     log("got move message for {0}", msg.piece);
                      var ball = model.ballByName(msg.piece);
                      if (ball) {
                          ball.vx = msg.vector[0];

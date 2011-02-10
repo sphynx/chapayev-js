@@ -1,8 +1,9 @@
 (function() {
      // to make global context more apparent
      var global = this;
+     var enableLogging = false;
 
-     var log = DS_utils.log;
+     var log = enableLogging ? DS_utils.log : function(){};
 
      // constants
      var CELL_SIZE = 50, // board cell size
@@ -239,9 +240,11 @@
              return function() {
                  log("ball {0} stopped at ({1}, {2})", ball.name, ball.attr("cx"), ball.attr("cy"));
 
+                 /* commented as we have fixed Raphael and don't need to adjust anymore
                  log("adjusting to real stop point({0}, {1})", pf.e(1), pf.e(2));
                  ball.attr({cx: pf.e(1), cy: pf.e(2)});
                  log("adjusted: current ball position is ({0}, {1})", ball.attr("cx"), ball.attr("cy"));
+                 */
 
                  delete movingBalls[ball.name];
                  if (DS_utils.isEmpty(movingBalls)) {
@@ -269,12 +272,13 @@
              return function() {
                  log("collision between {0} and {1}!", ball.name, other.name);
 
+                 /* commented as we have fixed Raphael and don't need to adjust anymore
                  log("collision point for {0} is ({1}, {2})", ball.name, pc.e(1), pc.e(2));
-                 log("adjusting to real collision point({0}, {1})", pc.e(1), pc.e(2));
                  ball.attr({cx: pc.e(1), cy: pc.e(2)});
                  log("adjusted: current ball position is ({0}, {1})", ball.attr("cx"), ball.attr("cy"));
+                 */
 
-                 // current velocity: multiplied on (1 - ratio) as we consider friction, 
+                 // current velocity: multiplied on (1 - ratio) as we consider friction,
                  // therefore speed is constantly reducing all along the path
                  var v = $V([ball.vx * (1 - ratio), ball.vy * (1 - ratio)]);
 

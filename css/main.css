@@ -33,9 +33,14 @@ body {
     display: block;
 }
 
+.result {
+    font-size: 2em;
+    display: block;
+}
+
 #redNick {
     color: red;
-    margin-top: 140px;
+
 }
 
 #whiteNick {
@@ -49,6 +54,16 @@ body {
 #whiteScore {
     color: white;
 }
+
+#redResult {
+    color: red;
+    margin-top: 105px;
+}
+
+#whiteResult {
+    color: white;
+}
+
 
 #status-block {
     position: absolute;

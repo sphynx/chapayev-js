@@ -143,6 +143,8 @@
              moveInProgress: ko.observable(false),
              multiplayer: ko.observable(false),
              currentColor: ko.observable("white"),
+             whiteResult: ko.observable("-"),
+             redResult: ko.observable("-"),
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -160,6 +162,8 @@
                  this.red([]);
                  this.whiteMove(true);
                  this.moveInProgress(false);
+                 this.whiteResult("-");
+                 this.redResult("-");
              },
 
              ballByName: function(name) {
@@ -263,6 +267,7 @@
                              } else {
                                  model.white.remove(ball);
                              }
+                             checkResult();
                              ball.remove();
                          }
                      );
@@ -320,6 +325,20 @@
              }
              path += "z";
              raphael.path(path).attr("stroke-width", 1);
+
+         }
+
+         function checkResult() {
+             if (model.red().length === 0 && model.white().length > 0) {
+                 model.redResult("lost");
+                 model.whiteResult("won");
+             } else if (model.white().length === 0 && model.red().length > 0) {
+                 model.whiteResult("lost");
+                 model.redResult("won");
+             } else if (model.white().length === 0 && model.red().length > 0) {
+                 model.redResult("draw");
+                 model.whiteResult("draw");
+             }
 
          }
 

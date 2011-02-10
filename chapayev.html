@@ -29,10 +29,12 @@
         <span id="status" data-bind="text: status, style: {color: status() == 'connected' ? 'green' : 'red'}"></span>
       </div>
 
+      <span id="redResult" class="result" data-bind="text: redResult">lost</span>
       <span id="redNick" class="nick" data-bind="text: redNick"></span>
       <span id="redScore" class="score" data-bind="text: red().length"></span>
       <span id="whiteScore" class="score" data-bind="text: white().length"></span>
       <span id="whiteNick" class="nick" data-bind="text: whiteNick"></span>
+      <span id="whiteResult" class="result" data-bind="text: whiteResult">won</span>
 
       <div id="current-block">
         Current move:

@@ -56,7 +56,7 @@
          var x, y, holder, f;
 
          // absolute location
-         if (e.pageX && e.pageX != undefined && e.pageY && e.pageY != undefined) {
+         if (typeof e.pageX !== "undefined" && typeof e.pageY !== "undefined") {
 	         x = e.pageX;
 	         y = e.pageY;
          } else {
@@ -65,17 +65,24 @@
 	         y = e.clientY + document.body.scrollTop +
                  document.documentElement.scrollTop;
          }
+         log("absolute location: {0}, {1}", x, y);
 
          // holder-relative location
+         // NB: holder.clientLeft and clientTop shows border width
+         // which is added to the element real width and height
          holder = document.getElementById("holder");
-         x -= holder.offsetLeft;
-         y -= holder.offsetTop;
+         x -= (holder.offsetLeft + holder.clientLeft);
+         y -= (holder.offsetTop + holder.clientTop);
+         log("holder-relative location: {0}, {1}", x, y);
 
          // (center of the box)-related location
-         x -= (box.x + box.width / 2);
-         y -= (box.y + box.height / 2);
+         x -= (box.x + (box.width / 2));
+         y -= (box.y + (box.height / 2));
+         log("box: x = {0}, y = {1}, width = {2}, height = {3}", box.x, box.y, box.width, box.height);
+         log("center of the box - relative location: {0}, {1}", x, y);
 
          // invert, as a velocity vector points in the opposite direction
+         log("velocity vector: {0}, {1}", -x, -y);
          return [-x, -y];
      }
 
@@ -361,6 +368,7 @@
                  y = 1/2 * CELL_SIZE + (model.redRow * CELL_SIZE);
                  piece = raphael.circle(x, y, RADIUS).attr("stroke-width", 3);
                  piece.attr("fill", "red");
+                 piece.attr("cursor", "crosshair");
                  piece.team = "red";
                  piece.name = "r" + i;
                  piece.node.onclick = makeClickListener(piece);
@@ -369,8 +377,10 @@
                  // white piece
                  y = 1/2 * CELL_SIZE + (model.whiteRow * CELL_SIZE);
                  piece = raphael.circle(x, y, RADIUS).attr("stroke-width", 3);
+
                  piece.attr("fill", "white");
                  piece.team = "white";
+                 piece.attr("cursor", "crosshair");
                  piece.name = "w" + i;
                  piece.node.onclick = makeClickListener(piece);
                  model.white.push(piece);
@@ -416,7 +426,7 @@
                          input.val("");
 
                          var message = parseCommand(dataStr);
-                         if (message != null && message != undefined) {
+                         if (message) {
                              switch (message.name) {
                              case CMD_NICK:
                                  // update nick on UI

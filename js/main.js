@@ -150,7 +150,7 @@
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
              multiplayer: ko.observable(false),
-             currentColor: ko.observable("white"),
+             myColor: ko.observable("white"),
              whiteResult: ko.observable("-"),
              redResult: ko.observable("-"),
 
@@ -162,7 +162,7 @@
              isAllowedToClick: function(team) {
                  return !this.moveInProgress()
                      && this.currentMove() === team
-                     && (!this.multiplayer() || this.currentColor() === team);
+                     && (!this.multiplayer() || this.myColor() === team);
              },
 
              reset: function() {
@@ -441,7 +441,7 @@
                                  return; // don't need to send to the server
                              }
                              socket.send(message);
-                             output.append("\nclient: Sent object " + JSON.stringify(message));
+                             log("client: Sent object {0}", JSON.stringify(message));
                          } else {
                              output.append("\nclient: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
                              output.append("\nclient: Commands available -- nick, invite, accept, decline, reset");
@@ -464,12 +464,18 @@
                  switch (msg.type) {
                  case "gamestart":
                      resetPieces();
-                     model.currentColor(msg.color);
                      if (msg.color == "white") {
+                         if (model.myColor() === "red") {
+                             model.whiteNick(model.redNick());
+                         }
                          model.redNick(msg.opponent);
                      } else {
+                         if (model.myColor() === "white") {
+                             model.redNick(model.whiteNick());
+                         }
                          model.whiteNick(msg.opponent);
                      }
+                     model.myColor(msg.color);
                      model.multiplayer(true);
                      break;
 

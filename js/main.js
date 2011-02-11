@@ -3,7 +3,8 @@
      var global = this;
      var enableLogging = false;
 
-     var log = enableLogging ? DS_utils.log : function(){};
+     var utils = DS_utils;
+     var log = enableLogging ? utils.log : function(){};
 
      // constants
      var CELL_SIZE = 50, // board cell size
@@ -137,8 +138,8 @@
              redRow: 1,
              whiteRow: ROWS,
              status: ko.observable("disconnected"),
-             whiteNick: ko.observable("guest"),
-             redNick: ko.observable("guest"),
+             whiteNick: ko.observable(utils.readCookie("nick") || "guest"),
+             redNick: ko.observable(utils.readCookie("nick") || "guest"),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
              multiplayer: ko.observable(false),
@@ -416,11 +417,13 @@
 
                          var message = parseCommand(dataStr);
                          if (message != null && message != undefined) {
-                             // update nick on UI
                              switch (message.name) {
                              case CMD_NICK:
+                                 // update nick on UI
                                  model.whiteNick(message.arg);
                                  model.redNick(message.arg);
+                                 // set cookies
+                                 utils.createCookie("nick", message.arg, 14);
                                  break;
 
                              case CMD_RESET:

@@ -23,7 +23,8 @@
          CMD_INVITE = "invite",
          CMD_ACCEPT = "accept",
          CMD_DECLINE = "decline",
-         CMD_RESET = "reset";
+         CMD_RESET = "reset",
+         CMD_CLEAR = "clear";
 
      // private utility functions which don't depend on state:
 
@@ -118,8 +119,10 @@
                  break;
 
              case CMD_RESET:
-                 message = { type: TYPE_COMMAND, name: CMD_RESET};
+             case CMD_CLEAR:
+                 message = { type: TYPE_COMMAND, name: commandName };
                  break;
+
              }
          }
 
@@ -439,7 +442,12 @@
                              case CMD_RESET:
                                  resetPieces();
                                  return; // don't need to send to the server
+
+                             case CMD_CLEAR:
+                                 output.html("");
+                                 return; // don't need to send to the server
                              }
+
                              socket.send(message);
                              log("client: Sent object {0}", JSON.stringify(message));
                          } else {

@@ -60,7 +60,9 @@ function cmdHandler(message, client) {
         var acceptorId = idByNick(acceptorNick);
 
         // add the invite to invites map
-        invites[inviterId] = [acceptorId];
+        invites[inviterId]
+            ? invites[inviterId].push(acceptorId) // add to an existing array
+            : invites[inviterId] = [acceptorId];  // or create a new array with it
 
         // send an invitation to the acceptor
         socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
@@ -83,10 +85,40 @@ function cmdHandler(message, client) {
             client.send(gameStartAcceptorMsg);
             // send to inviter
             socket.clients[inviterId].send(gameStartInviterMsg);
+            // empty list of invites for given player, since he already started a game
+            // and all the other invites become invalid
+            invites[inviterId] = [];
         } else {
-            console.log('false accept from '.format(acceptorNick));
+            console.log('false accept from {0}'.format(acceptorNick));
         }
 
+        break;
+
+    case 'decline':
+        var declinerId = id;
+        var declinerNick = nickById(declinerId);
+
+        inviterNick = message.arg;
+        inviterId = idByNick(inviterNick);
+
+        if ((invites[inviterId]) && invites[inviterId].indexOf(declinerId) !== -1) {
+            console.log('player {0} has declined invitation from player {1}'.format(declinerNick, inviterNick));
+            var declineMsg = { type: "decline", from: declinerNick };
+            // send 'decline' msg to inviter
+            socket.clients[inviterId].send(declineMsg);
+            // remove decliner from invite list as the invite has been declined
+            invites[inviterId].splice(invites[inviterId].indexOf(declinerId), 1);
+        } else {
+            console.log('false decline from {0}'.format(declinerNick));
+        }
+
+        break;
+
+    case 'debug':
+        console.log("debug info: ");
+        console.log("players = " + JSON.stringify(players));
+        console.log("nicks = " + JSON.stringify(nicks));
+        console.log("invites = " + JSON.stringify(invites));
         break;
 
     default:

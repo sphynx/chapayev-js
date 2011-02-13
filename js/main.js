@@ -459,6 +459,10 @@
              );
          }
 
+        function initNickname() {
+            socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()})
+        }
+
          function initSocket() {
              var handlers = {};
 
@@ -514,6 +518,7 @@
              ko.applyBindings(model);
              drawBoard();
              resetPieces();
+             initNickname();
          }
 
          // public interface

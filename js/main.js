@@ -23,6 +23,7 @@
          CMD_INVITE = "invite",
          CMD_ACCEPT = "accept",
          CMD_DECLINE = "decline",
+         CMD_REPLAY = "replay",
          CMD_RESET = "reset",
          CMD_CLEAR = "clear";
 
@@ -118,6 +119,7 @@
                  }
                  break;
 
+             case CMD_REPLAY:
              case CMD_RESET:
              case CMD_CLEAR:
                  message = { type: TYPE_COMMAND, name: commandName };

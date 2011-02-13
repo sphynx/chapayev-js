@@ -346,7 +346,7 @@
              } else if (model.white().length === 0 && model.red().length > 0) {
                  model.whiteResult("lost");
                  model.redResult("won");
-             } else if (model.white().length === 0 && model.red().length > 0) {
+             } else if (model.white().length === 0 && model.red().length === 0) {
                  model.redResult("draw");
                  model.whiteResult("draw");
              }

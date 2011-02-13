@@ -12,6 +12,8 @@
          RADIUS = CELL_SIZE/2 - 5, // radius of a piece
          BOARD_SIZE = ROWS * CELL_SIZE, // board size
          PUSH_POWER = 1.3, // coefficient of "push-power"
+         DEFAULT_NICK = "guest",
+         NICK_COOKIE_NAME = "nick",
 
          // network
          HOST = 'eth0.net.ua',
@@ -23,6 +25,7 @@
          CMD_INVITE = "invite",
          CMD_ACCEPT = "accept",
          CMD_DECLINE = "decline",
+         CMD_REPLAY = "replay",
          CMD_RESET = "reset",
          CMD_CLEAR = "clear",
          CMD_DEBUG = "debug";
@@ -59,12 +62,12 @@
 
          // absolute location
          if (typeof e.pageX !== "undefined" && typeof e.pageY !== "undefined") {
-	         x = e.pageX;
-	         y = e.pageY;
+             x = e.pageX;
+             y = e.pageY;
          } else {
-	         x = e.clientX + document.body.scrollLeft +
+             x = e.clientX + document.body.scrollLeft +
                  document.documentElement.scrollLeft;
-	         y = e.clientY + document.body.scrollTop +
+             y = e.clientY + document.body.scrollTop +
                  document.documentElement.scrollTop;
          }
          log("absolute location: {0}, {1}", x, y);
@@ -119,6 +122,7 @@
                  }
                  break;
 
+             case CMD_REPLAY:
              case CMD_RESET:
              case CMD_CLEAR:
              case CMD_DEBUG:
@@ -150,8 +154,8 @@
              redRow: 1,
              whiteRow: ROWS,
              status: ko.observable("disconnected"),
-             whiteNick: ko.observable(utils.readCookie("nick") || "guest"),
-             redNick: ko.observable(utils.readCookie("nick") || "guest"),
+             whiteNick: ko.observable(utils.readCookie(NICK_COOKIE_NAME) || DEFAULT_NICK),
+             redNick: ko.observable(utils.readCookie(NICK_COOKIE_NAME) || DEFAULT_NICK),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
              multiplayer: ko.observable(false),
@@ -461,6 +465,10 @@
              );
          }
 
+        function initNickname() {
+            socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()})
+        }
+
          function initSocket() {
              var handlers = {};
 
@@ -516,6 +524,7 @@
              ko.applyBindings(model);
              drawBoard();
              resetPieces();
+             initNickname();
          }
 
          // public interface

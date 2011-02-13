@@ -510,6 +510,7 @@
              handlers.disconnect = function() {
                  model.status("disconnected");
                  output.append('\nsystem: disconnected');
+                 socket.connect();
              };
 
              socket = CH_Socket(HOST, PORT, handlers);

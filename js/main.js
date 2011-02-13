@@ -58,12 +58,12 @@
 
          // absolute location
          if (typeof e.pageX !== "undefined" && typeof e.pageY !== "undefined") {
-	         x = e.pageX;
-	         y = e.pageY;
+             x = e.pageX;
+             y = e.pageY;
          } else {
-	         x = e.clientX + document.body.scrollLeft +
+             x = e.clientX + document.body.scrollLeft +
                  document.documentElement.scrollLeft;
-	         y = e.clientY + document.body.scrollTop +
+             y = e.clientY + document.body.scrollTop +
                  document.documentElement.scrollTop;
          }
          log("absolute location: {0}, {1}", x, y);

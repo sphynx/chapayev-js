@@ -28,6 +28,19 @@ function idByNick(nick) {
     return nicks[nick];
 }
 
+function pairPlayers(p1Id, p2Id, p1Nick, p2Nick) {
+    console.log("pairing players {0} and {1}".format(p1Nick, p2Nick));
+    var p1Msg =  { type: "gamestart", opponent: p2Nick, color: "red" };
+    var p2Msg = { type: "gamestart", opponent: p1Nick, color: "white" };
+    // two guys are paired, let's start the game!
+    socket.clients[p1Id].send(p1Msg);
+    socket.clients[p2Id].send(p2Msg);
+    // empty list of invites for given players, since they already started a game
+    // and all the other invites become invalid
+    invites[p1Id] = [];
+    invites[p2Id] = [];
+}
+
 function cmdHandler(message, client) {
     var cmdName = message.name;
     var id = client.sessionId;
@@ -59,14 +72,21 @@ function cmdHandler(message, client) {
         var acceptorNick = message.arg;
         var acceptorId = idByNick(acceptorNick);
 
-        // add the invite to invites map
-        invites[inviterId]
-            ? invites[inviterId].push(acceptorId) // add to an existing array
-            : invites[inviterId] = [acceptorId];  // or create a new array with it
+        // check if inviter has been invited himself
+        // if two players are inviting each other: pair them
+        if (invites[acceptorId] && invites[acceptorId].indexOf(inviterId) !== -1) {
+            console.log("Mutual invitation for players {0} and {1}".format(inviterNick, acceptorNick));
+            pairPlayers(inviterId, acceptorId, inviterNick, acceptorNick);
+        } else {
+            // add the invite to invites map
+            invites[inviterId]
+                ? invites[inviterId].push(acceptorId) // add to an existing array
+                : invites[inviterId] = [acceptorId];  // or create a new array with it
 
-        // send an invitation to the acceptor
-        socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
-        console.log("player {0} has been invited to play with {1}".format(acceptorNick, inviterNick));
+            // send an invitation to the acceptor
+            socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
+            console.log("player {0} has been invited to play with {1}".format(acceptorNick, inviterNick));
+        }
         break;
 
     case "accept":
@@ -78,16 +98,7 @@ function cmdHandler(message, client) {
 
         if ((inviterId in invites) && invites[inviterId].indexOf(acceptorId) !== -1) {
             console.log("player {0} has accepted invitation from player {1}".format(acceptorNick, inviterNick));
-            var gameStartAcceptorMsg = { type: "gamestart", opponent: inviterNick, color: "white" };
-            var gameStartInviterMsg =  { type: "gamestart", opponent: acceptorNick, color: "red" };
-            // two guys are paired, let's start the game!
-            // send to acceptor
-            client.send(gameStartAcceptorMsg);
-            // send to inviter
-            socket.clients[inviterId].send(gameStartInviterMsg);
-            // empty list of invites for given player, since he already started a game
-            // and all the other invites become invalid
-            invites[inviterId] = [];
+            pairPlayers(inviterId, acceptorId, inviterNick, acceptorNick);
         } else {
             console.log("false accept from {0}".format(acceptorNick));
         }

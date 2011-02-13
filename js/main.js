@@ -27,7 +27,8 @@
          CMD_DECLINE = "decline",
          CMD_REPLAY = "replay",
          CMD_RESET = "reset",
-         CMD_CLEAR = "clear";
+         CMD_CLEAR = "clear",
+         CMD_DEBUG = "debug";
 
      // private utility functions which don't depend on state:
 
@@ -124,6 +125,7 @@
              case CMD_REPLAY:
              case CMD_RESET:
              case CMD_CLEAR:
+             case CMD_DEBUG:
                  message = { type: TYPE_COMMAND, name: commandName };
                  break;
 

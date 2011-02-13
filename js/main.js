@@ -12,6 +12,8 @@
          RADIUS = CELL_SIZE/2 - 5, // radius of a piece
          BOARD_SIZE = ROWS * CELL_SIZE, // board size
          PUSH_POWER = 1.3, // coefficient of "push-power"
+         DEFAULT_NICK = "guest",
+         NICK_COOKIE_NAME = "nick",
 
          // network
          HOST = 'eth0.net.ua',
@@ -150,8 +152,8 @@
              redRow: 1,
              whiteRow: ROWS,
              status: ko.observable("disconnected"),
-             whiteNick: ko.observable(utils.readCookie("nick") || "guest"),
-             redNick: ko.observable(utils.readCookie("nick") || "guest"),
+             whiteNick: ko.observable(utils.readCookie(NICK_COOKIE_NAME) || DEFAULT_NICK),
+             redNick: ko.observable(utils.readCookie(NICK_COOKIE_NAME) || DEFAULT_NICK),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
              multiplayer: ko.observable(false),

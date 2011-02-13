@@ -124,6 +124,9 @@
                  break;
 
              case CMD_REPLAY:
+                 message = { type: TYPE_COMMAND, name: CMD_REPLAY };
+                 break;
+
              case CMD_RESET:
              case CMD_CLEAR:
              case CMD_DEBUG:
@@ -164,6 +167,7 @@
              myColor: ko.observable("white"),
              whiteResult: ko.observable("-"),
              redResult: ko.observable("-"),
+             lastOpponent: null,
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -447,6 +451,12 @@
                                  utils.createCookie("nick", message.arg, 14);
                                  break;
 
+                             case CMD_REPLAY:
+                                 if (!model.lastOpponent) return;
+                                 message.name = CMD_INVITE;
+                                 message.arg = model.lastOpponent;
+                                 break;
+
                              case CMD_RESET:
                                  resetPieces();
                                  return; // don't need to send to the server
@@ -497,6 +507,7 @@
                      }
                      model.myColor(msg.color);
                      model.multiplayer(true);
+                     model.lastOpponent = msg.opponent;
                      break;
 
                  case "move":

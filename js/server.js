@@ -1,5 +1,5 @@
-var http = require('http'),
-    io = require('socket.io');
+var http = require("http"),
+    io = require("socket.io");
 
 // data structures for storing players, games, game proposal, etc.
 var players = {}, // map: client.sessionId -> player object
@@ -32,10 +32,10 @@ function cmdHandler(message, client) {
     var cmdName = message.name;
     var id = client.sessionId;
 
-    console.log('got cmd: ' + cmdName);
+    console.log("got cmd: " + cmdName);
 
     switch (cmdName) {
-    case 'nick':
+    case "nick":
         var newNick = message.arg;
         var oldNick = nickById(id);
 
@@ -46,11 +46,11 @@ function cmdHandler(message, client) {
         delete nicks[oldNick];
         nicks[newNick] = id;
 
-        console.log('nick has been changed from {0} to {1} for player {2}'.format(oldNick, newNick, id));
-        socket.broadcast({ type: 'nickchange', id: id, oldNick: oldNick, newNick: newNick });
+        console.log("nick has been changed from {0} to {1} for player {2}".format(oldNick, newNick, id));
+        socket.broadcast({ type: "nickchange", id: id, oldNick: oldNick, newNick: newNick });
         break;
 
-    case 'invite':
+    case "invite":
         // inviter -- a player issuing a game request (proposing to play)
         var inviterId = id;
         var inviterNick = nickById(id);
@@ -66,10 +66,10 @@ function cmdHandler(message, client) {
 
         // send an invitation to the acceptor
         socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
-        console.log('player {0} has been invited to play with {1}'.format(acceptorNick, inviterNick));
+        console.log("player {0} has been invited to play with {1}".format(acceptorNick, inviterNick));
         break;
 
-    case 'accept':
+    case "accept":
         acceptorId = id;
         acceptorNick = nickById(acceptorId);
 
@@ -77,7 +77,7 @@ function cmdHandler(message, client) {
         inviterId = idByNick(inviterNick);
 
         if ((inviterId in invites) && invites[inviterId].indexOf(acceptorId) !== -1) {
-            console.log('player {0} has accepted invitation from player {1}'.format(acceptorNick, inviterNick));
+            console.log("player {0} has accepted invitation from player {1}".format(acceptorNick, inviterNick));
             var gameStartAcceptorMsg = { type: "gamestart", opponent: inviterNick, color: "white" };
             var gameStartInviterMsg =  { type: "gamestart", opponent: acceptorNick, color: "red" };
             // two guys are paired, let's start the game!
@@ -89,12 +89,12 @@ function cmdHandler(message, client) {
             // and all the other invites become invalid
             invites[inviterId] = [];
         } else {
-            console.log('false accept from {0}'.format(acceptorNick));
+            console.log("false accept from {0}".format(acceptorNick));
         }
 
         break;
 
-    case 'decline':
+    case "decline":
         var declinerId = id;
         var declinerNick = nickById(declinerId);
 
@@ -102,49 +102,57 @@ function cmdHandler(message, client) {
         inviterId = idByNick(inviterNick);
 
         if ((invites[inviterId]) && invites[inviterId].indexOf(declinerId) !== -1) {
-            console.log('player {0} has declined invitation from player {1}'.format(declinerNick, inviterNick));
+            console.log("player {0} has declined invitation from player {1}".format(declinerNick, inviterNick));
             var declineMsg = { type: "decline", from: declinerNick };
-            // send 'decline' msg to inviter
+            // send "decline" msg to inviter
             socket.clients[inviterId].send(declineMsg);
             // remove decliner from invite list as the invite has been declined
             invites[inviterId].splice(invites[inviterId].indexOf(declinerId), 1);
         } else {
-            console.log('false decline from {0}'.format(declinerNick));
+            console.log("false decline from {0}".format(declinerNick));
         }
 
         break;
 
-    case 'debug':
+    case "debug":
         console.log("debug info: ");
         console.log("players = " + JSON.stringify(players));
         console.log("nicks = " + JSON.stringify(nicks));
         console.log("invites = " + JSON.stringify(invites));
         break;
 
+    case "list":
+        var list = [];
+        for (sessionId in players) {
+            list.push(players[sessionId]);
+        }
+        client.send({ type: "playerslist", list: list });
+        break;
+
     default:
-        console.log('no such cmd defined yet: ' + cmdName);
+        console.log("no such cmd defined yet: " + cmdName);
     };
 }
 
 // Add a connect listener
 socket.on(
-    'connection',
+    "connection",
     function(client) {
         // Add the new user to the list of players
-        var generatedNick = 'anonymous' + Date.now();
+        var generatedNick = "anonymous" + Date.now();
         players[client.sessionId] = { nick: generatedNick};
         nicks[generatedNick] = client.sessionId;
 
         // Send to the new user the list of active players
-        client.send({ type: 'playerslist', list: players });
+        client.send({ type: "playerslist", list: players });
 
         // Broadcast the new user to all players
-        socket.broadcast({ type: 'new', id: client.sessionId }, [client.sessionId]);
+        socket.broadcast({ type: "new", id: client.sessionId }, [client.sessionId]);
 
         client.on(
-            'message',
+            "message",
             function(message) {
-                console.log('got message: ' + JSON.stringify(message));
+                console.log("got message: " + JSON.stringify(message));
 
                 switch (message.type) {
                     case "cmd":
@@ -156,18 +164,18 @@ socket.on(
                     break;
 
                     default:
-                    console.log('no handler specified yet for message.type = ' + message.type);
+                    console.log("no handler specified yet for message.type = " + message.type);
                 }
             });
 
         client.on(
-            'disconnect',
+            "disconnect",
             function () {
                 // Remove the user from the list of players
                 delete players[this.sessionId];
 
-                // Broadcast the logged out user's id
-                socket.broadcast({ type: 'left', id: this.sessionId });
+                // Broadcast the logged out user"s id
+                socket.broadcast({ type: "left", id: this.sessionId });
             });
     });
 

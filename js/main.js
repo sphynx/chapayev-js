@@ -28,7 +28,8 @@
          CMD_REPLAY = "replay",
          CMD_RESET = "reset",
          CMD_CLEAR = "clear",
-         CMD_DEBUG = "debug";
+         CMD_DEBUG = "debug",
+         CMD_LIST = "list";
 
      // private utility functions which don't depend on state:
 
@@ -126,6 +127,7 @@
              case CMD_RESET:
              case CMD_CLEAR:
              case CMD_DEBUG:
+             case CMD_LIST:
                  message = { type: TYPE_COMMAND, name: commandName };
                  break;
 
@@ -466,7 +468,7 @@
          }
 
         function initNickname() {
-            socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()})
+            socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()});
         }
 
          function initSocket() {
@@ -506,6 +508,7 @@
                          startBall(ball);
                      }
                      break;
+
                  }
              };
 

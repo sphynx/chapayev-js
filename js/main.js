@@ -16,7 +16,7 @@
          NICK_COOKIE_NAME = "nick",
 
          // network
-         HOST = 'eth0.net.ua',
+         HOST = "eth0.net.ua",
          PORT = 8124,
 
          // console commands
@@ -337,20 +337,7 @@
              };
          };
 
-         // UI stuff:
-         function drawBoard() {
-             var i, path = "";
-
-             // 8x8 grid with path lines
-             for (i = 1; i <= ROWS + 1; i++) {
-                 path += "M" + (CELL_SIZE * i) + " " + CELL_SIZE + "v" + BOARD_SIZE;
-                 path += "M" + CELL_SIZE + " "  + CELL_SIZE * i + "h" + BOARD_SIZE;
-             }
-             path += "z";
-             raphael.path(path).attr("stroke-width", 1);
-
-         }
-
+         // after any change in model.all() we check if the game has ended
          function checkResult() {
              if (model.red().length === 0 && model.white().length > 0) {
                  model.redResult("lost");
@@ -362,6 +349,19 @@
                  model.redResult("draw");
                  model.whiteResult("draw");
              }
+         }
+
+         // UI stuff:
+         function drawBoard() {
+             var i, path = "";
+
+             // 8x8 grid with path lines
+             for (i = 1; i <= ROWS + 1; i++) {
+                 path += "M" + (CELL_SIZE * i) + " " + CELL_SIZE + "v" + BOARD_SIZE;
+                 path += "M" + CELL_SIZE + " "  + CELL_SIZE * i + "h" + BOARD_SIZE;
+             }
+             path += "z";
+             raphael.path(path).attr("stroke-width", 1);
 
          }
 
@@ -424,6 +424,11 @@
              };
          }
 
+         function consoleAppend(str) {
+             output.append("\n" + str);
+             output.attr("scrollTop", output.attr("scrollHeight"));
+         }
+
          // init stuff
          function initUI() {
              raphael = Raphael("holder", 500, 500);
@@ -437,7 +442,7 @@
                  function(event) {
                      if (event.which == '13') {
                          var dataStr = input.val();
-                         output.append("\nclient: " + dataStr);
+                         consoleAppend("client: " + dataStr);
                          input.val("");
 
                          var message = parseCommand(dataStr);
@@ -469,28 +474,28 @@
                              socket.send(message);
                              log("client: Sent object {0}", JSON.stringify(message));
                          } else {
-                             output.append("\nclient: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
-                             output.append("\nclient: Commands available -- nick, invite, accept, decline, reset");
+                             consoleAppend("client: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
+                             consoleAppend("client: Commands available -- nick, invite, accept, decline, reset");
                          }
                      }
                  }
              );
          }
 
-        function initNickname() {
+         function initNickname() {
             socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()});
-        }
+         }
 
          function initSocket() {
              var handlers = {};
 
              handlers.connect = function() {
                  model.status("connected");
-                 output.append('system: connected');
+                 output.append("system: connected");
              };
 
              handlers.message = function(msg) {
-                 output.append('\nserver: ' + JSON.stringify(msg));
+                 consoleAppend("server: " + JSON.stringify(msg));
                  switch (msg.type) {
                  case "gamestart":
                      resetPieces();
@@ -525,7 +530,7 @@
 
              handlers.disconnect = function() {
                  model.status("disconnected");
-                 output.append('\nsystem: disconnected');
+                 consoleAppend("system: disconnected");
                  socket.connect();
              };
 

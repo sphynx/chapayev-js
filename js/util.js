@@ -3,8 +3,8 @@ var DS_utils = window["DS_utils"] = {};
 // util function for easy formatting
 String.prototype.format = function() {
     var formatted = this;
-    for (arg in arguments) {
-        formatted = formatted.replace("{" + arg + "}", arguments[arg]);
+    for (var i = 0; i < arguments.length; i++) {
+        formatted = formatted.replace("{" + i + "}", arguments[i]);
     }
     return formatted;
 };

@@ -12,7 +12,7 @@
          RADIUS = CELL_SIZE/2 - 5, // radius of a piece
          BOARD_SIZE = ROWS * CELL_SIZE, // board size
          PUSH_POWER = 1.3, // coefficient of "push-power"
-         DEFAULT_NICK = "guest",
+         DEFAULT_NICK = "guest" + (Date.now() % 10000),
          NICK_COOKIE_NAME = "nick",
 
          // network
@@ -22,6 +22,7 @@
          // console commands and chat messages
          TYPE_COMMAND = "cmd",
          TYPE_CHAT_MSG = "chatmessage",
+         TYPE_INIT = "init",
 
          CMD_NICK = "nick",
          CMD_INVITE = "invite",
@@ -493,8 +494,10 @@
              );
          }
 
-         function initNickname() {
-            socket.send({ type: TYPE_COMMAND, name: CMD_NICK, arg: model.whiteNick()});
+         function initPlayerOnServer() {
+            var nick = model.whiteNick();
+            socket.send({ type: TYPE_INIT, nick: nick });
+            consoleAppend("system: your nick is {0}".format(nick));
          }
 
          function initSocket() {
@@ -503,6 +506,7 @@
              handlers.connect = function() {
                  model.status("connected");
                  consoleAppend("system: connected");
+                 initPlayerOnServer();
              };
 
              handlers.message = function(msg) {
@@ -600,7 +604,6 @@
              ko.applyBindings(model);
              drawBoard();
              resetPieces();
-             initNickname();
          }
 
          // public interface

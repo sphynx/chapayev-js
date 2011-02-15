@@ -41,6 +41,11 @@ function pairPlayers(p1Id, p2Id, p1Nick, p2Nick) {
     invites[p2Id] = [];
 }
 
+// well, it's not 100% unique, but enough for now
+function makeNickUnique(nick) {
+    return (nicks[nick]) ? nick + (Date.now() % 10000) : nick;
+}
+
 function cmdHandler(message, client) {
     var cmdName = message.name;
     var id = client.sessionId;
@@ -49,7 +54,7 @@ function cmdHandler(message, client) {
 
     switch (cmdName) {
     case "nick":
-        var newNick = message.arg;
+        var newNick = makeNickUnique(message.arg);
         var oldNick = nickById(id);
 
         // update player's nick
@@ -60,7 +65,8 @@ function cmdHandler(message, client) {
         nicks[newNick] = id;
 
         console.log("nick has been changed from {0} to {1} for player {2}".format(oldNick, newNick, id));
-        socket.broadcast({ type: "nickchange", id: id, oldNick: oldNick, newNick: newNick });
+        socket.broadcast({ type: "nickchange", oldNick: oldNick, newNick: newNick }, [client.sessionId]);
+        client.send({ type: "nickack", oldNick: oldNick, nick: newNick });
         break;
 
     case "invite":
@@ -172,20 +178,18 @@ socket.on(
 
                 case "init":
                     // add the new user to the list of players
-                    var nick = message.nick;
-                    if (nicks[nick]) {
-                        // nick is taken
-                        nick = "guest" + Date.now();
-                    }
+                    var nick = makeNickUnique(message.nick);
                     players[client.sessionId] = { nick: nick };
                     nicks[nick] = client.sessionId;
+
+                    // send nick acknowledgement
+                    client.send({type: "nickack", nick : nick});
 
                     // Send to the new user the list of active players (including himself)
                     client.send({ type: "playerslist", list: players });
 
                     // Broadcast the new user to all players
                     socket.broadcast({ type: "new", id: client.sessionId, who: nick }, [client.sessionId]);
-
                     break;
 
                 default:

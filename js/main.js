@@ -497,7 +497,7 @@
          function initPlayerOnServer() {
             var nick = model.whiteNick();
             socket.send({ type: TYPE_INIT, nick: nick });
-            consoleAppend("system: your nick is {0}".format(nick));
+
          }
 
          function initSocket() {
@@ -548,6 +548,22 @@
                      consoleAppend("* {0} is known as {1}".format(msg.oldNick, msg.newNick));
                      model.players.remove(function(p) { return p.name === msg.oldNick; });
                      model.players.push({ name: msg.newNick });
+                     break;
+
+                 case "nickack":
+                     if (model.whiteNick() === msg.nick) {
+                         consoleAppend("system: your nick is {0}".format(msg.nick));
+                     } else {
+                         consoleAppend("system: your nick is taken, so it has been changed to {0}".format(msg.nick));
+                         model.whiteNick(msg.nick);
+                         model.redNick(msg.nick);
+                     }
+
+                     if (msg.oldNick) {
+                         model.players.remove(function(p) { return p.name === msg.oldNick; });
+                         model.players.push({ name: msg.nick });
+                     }
+
                      break;
 
                  case "gamerequest":

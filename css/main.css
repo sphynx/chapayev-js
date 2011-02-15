@@ -79,10 +79,10 @@ body {
 
 #console {
     width: 370px;
-    height: 480px;
+    height: 330px;
     position: absolute;
     left: 810px;
-    top: 50px;
+    top: 200px;
     border: 3px dashed #fff;
     padding: 10px 10px;
 }
@@ -95,7 +95,39 @@ body {
 
 #out {
     border: 0px;
-    height: 455px;
+    height: 300px;
     resize: none;
 }
 
+#players {
+    width: 380px;
+    height: 130px;
+    position: absolute;
+    left: 810px;
+    top: 50px;
+    border: 3px dashed #fff;
+    border-bottom: 0px;
+    padding: 5px;
+    margin: 0px;
+}
+
+.player {
+    list-style-type: none;
+    float: left;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    line-height: 0.9;
+    margin: 5px 3px;
+    padding: 6px 8px 6px;
+    font-weight: bold;
+    background-color: #414141;
+    color: #FFFFFF;
+}
+
+.player:hover {
+    background-color: #CC0000;
+}

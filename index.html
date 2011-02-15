@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/main.css"/>
 
     <script src="lib/jquery.js"></script>
+    <script src="lib/jquery.tmpl.js"></script>
     <script src="lib/knockout.js"></script>
     <script src="lib/raphael.js"></script>
     <script src="lib/sylvester.js"></script>
@@ -17,6 +18,11 @@
     <script src="js/collision.js"></script>
     <script src="js/socket.js"></script>
     <script src="js/main.js"></script>
+
+    <!-- Knockout.js templates -->
+    <script id="tplPlayers" type="text/html">
+      <li class="player">${name}</li>
+    </script>
 
   </head>
   <body>
@@ -47,6 +53,14 @@
       <textarea id="out" class="control" readonly="true"></textarea>
       <input type="text" id="in" class="control">
     </div>
+
+    <ul id="players" data-bind="template: {
+         name: 'tplPlayers',
+         foreach: players,
+         beforeRemove: function(elem) { $(elem).fadeOut(1500) },
+         afterAdd: function(elem) { $(elem).hide().fadeIn(1500) } }">
+      <li class="player">orgb</li>
+    </ul>
 
   </body>
 </html>

@@ -177,6 +177,7 @@
              whiteResult: ko.observable("-"),
              redResult: ko.observable("-"),
              lastOpponent: null,
+             players: ko.observableArray([]),
 
              changeMove: function() {
                  this.whiteMove(!this.whiteMove());
@@ -541,6 +542,8 @@
 
                  case "nickchange":
                      consoleAppend("* {0} is known as {1}".format(msg.oldNick, msg.newNick));
+                     model.players.remove(function(p) { return p.name === msg.oldNick; });
+                     model.players.push({ name: msg.newNick });
                      break;
 
                  case "gamerequest":
@@ -555,17 +558,23 @@
                  case "playerslist":
                      var players = msg.list;
                      var names = [];
+
+                     model.players([]);
                      for (key in players) {
                          names.push(players[key].nick);
+                         model.players.push({ name: players[key].nick });
                      }
+
                      consoleAppend("players online: {0}".format(names.join(", ")));
                      break;
 
                  case "left":
                      consoleAppend("* {0} has left :(".format(msg.who));
+                     model.players.remove(function(p) { return p.name === msg.who; });
                      break;
 
                  case "new":
+                     model.players.push({ name: msg.who });
                      consoleAppend("* new player arrived: {0}".format(msg.who));
                      break;
 

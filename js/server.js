@@ -207,6 +207,14 @@ socket.on(
                 // Remove the user from the list of players
                 delete players[this.sessionId];
                 delete invites[this.sessionId];
+
+                // Remove from nicks as well
+                for (var nick in nicks) {
+                    if (nicks[nick] === this.sessionId) {
+                        delete nicks[nick];
+                        break;
+                    }
+                }
             });
     });
 

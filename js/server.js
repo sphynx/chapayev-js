@@ -151,14 +151,14 @@ socket.on(
     function(client) {
         // Add the new user to the list of players
         var generatedNick = "anonymous" + Date.now();
-        players[client.sessionId] = { nick: generatedNick};
+        players[client.sessionId] = { nick: generatedNick };
         nicks[generatedNick] = client.sessionId;
 
         // Send to the new user the list of active players
         client.send({ type: "playerslist", list: players });
 
         // Broadcast the new user to all players
-        socket.broadcast({ type: "new", id: client.sessionId }, [client.sessionId]);
+        socket.broadcast({ type: "new", id: client.sessionId, who: generatedNick }, [client.sessionId]);
 
         client.on(
             "message",
@@ -174,6 +174,11 @@ socket.on(
                     client.broadcast(message, [client.sessionId]);
                     break;
 
+                    case "chatmessage":
+                    message.from = nickById(client.sessionId);
+                    client.broadcast(message, [client.sessionId]);
+                    break;
+
                     default:
                     console.log("no handler specified yet for message.type = " + message.type);
                 }
@@ -182,11 +187,13 @@ socket.on(
         client.on(
             "disconnect",
             function () {
-                // Remove the user from the list of players
-                delete players[this.sessionId];
 
                 // Broadcast the logged out user"s id
-                socket.broadcast({ type: "left", id: this.sessionId });
+                socket.broadcast({ type: "left", id: this.sessionId, who: nickById(this.sessionId) });
+
+                // Remove the user from the list of players
+                delete players[this.sessionId];
+                delete invites[this.sessionId];
             });
     });
 

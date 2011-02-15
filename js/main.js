@@ -19,8 +19,10 @@
          HOST = "eth0.net.ua",
          PORT = 8124,
 
-         // console commands
+         // console commands and chat messages
          TYPE_COMMAND = "cmd",
+         TYPE_CHAT_MSG = "chatmessage",
+
          CMD_NICK = "nick",
          CMD_INVITE = "invite",
          CMD_ACCEPT = "accept",
@@ -95,45 +97,52 @@
      function parseCommand(commandStr) {
          var commandElements = commandStr.split(/\s+/);
          var message = null;
-         if (commandElements.length > 0 && commandElements[0].charAt(0) === '/') {
-             var commandName = commandElements[0].slice(1);
-             switch (commandName) {
-             case CMD_NICK:
-                 if (commandElements[1] && commandElements[1].length > 0) {
-                     var nick = commandElements[1];
-                     message = { type: TYPE_COMMAND, name: CMD_NICK, arg: nick};
+         if (commandElements.length > 0) {
+
+             if (commandElements[0].charAt(0) === '/') {
+                 // it is a command as it starts with slash
+                 var commandName = commandElements[0].slice(1);
+                 switch (commandName) {
+                 case CMD_NICK:
+                     if (commandElements[1] && commandElements[1].length > 0) {
+                         var nick = commandElements[1];
+                         message = { type: TYPE_COMMAND, name: CMD_NICK, arg: nick};
+                     }
+                     break;
+
+                 case CMD_INVITE:
+                     if (commandElements[1] && commandElements[1].length > 0) {
+                         message = { type: TYPE_COMMAND, name: CMD_INVITE, arg: commandElements[1] };
+                     }
+                     break;
+
+                 case CMD_ACCEPT:
+                     if (commandElements[1] && commandElements[1].length > 0) {
+                         message = { type: TYPE_COMMAND, name: CMD_ACCEPT, arg: commandElements[1] };
+                     }
+                     break;
+
+                 case CMD_DECLINE:
+                     if (commandElements[1] && commandElements[1].length > 0) {
+                         message = { type: TYPE_COMMAND, name: CMD_DECLINE, arg: commandElements[1] };
+                     }
+                     break;
+
+                 case CMD_REPLAY:
+                     message = { type: TYPE_COMMAND, name: CMD_REPLAY };
+                     break;
+
+                 case CMD_RESET:
+                 case CMD_CLEAR:
+                 case CMD_DEBUG:
+                 case CMD_LIST:
+                     message = { type: TYPE_COMMAND, name: commandName };
+                     break;
+
                  }
-                 break;
-
-             case CMD_INVITE:
-                 if (commandElements[1] && commandElements[1].length > 0) {
-                     message = { type: TYPE_COMMAND, name: CMD_INVITE, arg: commandElements[1] };
-                 }
-                 break;
-
-             case CMD_ACCEPT:
-                 if (commandElements[1] && commandElements[1].length > 0) {
-                     message = { type: TYPE_COMMAND, name: CMD_ACCEPT, arg: commandElements[1] };
-                 }
-                 break;
-
-             case CMD_DECLINE:
-                 if (commandElements[1] && commandElements[1].length > 0) {
-                     message = { type: TYPE_COMMAND, name: CMD_DECLINE, arg: commandElements[1] };
-                 }
-                 break;
-
-             case CMD_REPLAY:
-                 message = { type: TYPE_COMMAND, name: CMD_REPLAY };
-                 break;
-
-             case CMD_RESET:
-             case CMD_CLEAR:
-             case CMD_DEBUG:
-             case CMD_LIST:
-                 message = { type: TYPE_COMMAND, name: commandName };
-                 break;
-
+             } else {
+                 // no slash -> chat message
+                 message = { type: TYPE_CHAT_MSG, text: commandStr };
              }
          }
 
@@ -442,7 +451,7 @@
                  function(event) {
                      if (event.which == '13') {
                          var dataStr = input.val();
-                         consoleAppend("client: " + dataStr);
+                         consoleAppend("me: " + dataStr);
                          input.val("");
 
                          var message = parseCommand(dataStr);
@@ -474,8 +483,9 @@
                              socket.send(message);
                              log("client: Sent object {0}", JSON.stringify(message));
                          } else {
-                             consoleAppend("client: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
-                             consoleAppend("client: Commands available -- nick, invite, accept, decline, reset");
+                             consoleAppend("help: Syntax -- /&lt;command&gt; &lt;arguments&gt;");
+                             consoleAppend("help: Commands available -- nick, invite, accept, decline, replay, clear");
+                             consoleAppend("help: Or just type something to chat");
                          }
                      }
                  }
@@ -491,11 +501,10 @@
 
              handlers.connect = function() {
                  model.status("connected");
-                 output.append("system: connected");
+                 consoleAppend("system: connected");
              };
 
              handlers.message = function(msg) {
-                 consoleAppend("server: " + JSON.stringify(msg));
                  switch (msg.type) {
                  case "gamestart":
                      resetPieces();
@@ -513,6 +522,7 @@
                      model.myColor(msg.color);
                      model.multiplayer(true);
                      model.lastOpponent = msg.opponent;
+                     consoleAppend("* new game has started!");
                      break;
 
                  case "move":
@@ -524,6 +534,43 @@
                          startBall(ball);
                      }
                      break;
+
+                 case "chatmessage":
+                     consoleAppend("{0}: {1}".format(msg.from, msg.text));
+                     break;
+
+                 case "nickchange":
+                     consoleAppend("* {0} is known as {1}".format(msg.oldNick, msg.newNick));
+                     break;
+
+                 case "gamerequest":
+                     consoleAppend("* {0} want to play with you! Please type /accept {1} or /decline {2}".format(
+                                       msg.from, msg.from, msg.from));
+                     break;
+
+                 case "decline":
+                     consoleAppend("* {0} has declined your invitation :(".format(msg.from));
+                     break;
+
+                 case "playerslist":
+                     var players = msg.list;
+                     var names = [];
+                     for (key in players) {
+                         names.push(players[key].nick);
+                     }
+                     consoleAppend("players online: {0}".format(names.join(", ")));
+                     break;
+
+                 case "left":
+                     consoleAppend("* {0} has left :(".format(msg.who));
+                     break;
+
+                 case "new":
+                     consoleAppend("* new player arrived: {0}".format(msg.who));
+                     break;
+
+                 default:
+                     consoleAppend("raw message from server: " + JSON.stringify(msg));
 
                  }
              };

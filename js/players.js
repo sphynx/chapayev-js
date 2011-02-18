@@ -10,27 +10,33 @@
          var players = {}; // map: client.sessionId -> player object
          var nicks = {};   // map: player nickname  -> client.sessionId (opposite to players)
 
-         function add(id, nick) {
-             players[id] = { nick: nick };
-             nicks[nick] = id;
+         function add(id, nk) {
+             nk = unique(nk);
+             players[id] = { nick: nk };
+             nicks[nk] = id;
+             return nk;
          }
 
-         function remove(id, nick) {
+         function remove(id) {
              var nk = nick(id);
-             nk && delete nicks[nk];
+             if (nk) {
+                 delete nicks[nk];
+             }
              delete players[id];
          }
 
-         function update(id, nick) {
-             var oldNick = nick(id);
+         function update(id, nk) {
+             var oldNick = unique(nick(id));
              oldNick && delete nicks[oldNick];
-             players[id] && players[id].nick = nick;
-             nicks[nick] = id;
-             return oldNick;
+             if (players[id]) {
+                 players[id].nick = nk;
+             }
+             nicks[nk] = id;
+             return [oldNick, nk];
          }
 
-         function reserved(nick) {
-             return !!nicks[nick];
+         function reserved(nk) {
+             return !!nicks[nk];
          }
 
          function nick(id) {
@@ -42,7 +48,11 @@
          }
 
          function get() {
-             return players; 
+             return players;
+         }
+
+         function unique(nk) {
+             return reserved(nk) ? nk + (Date.now() % 10000) : nk;
          }
 
          return {
@@ -54,7 +64,6 @@
              get: get
          };
      };
-    
 })();
 
 

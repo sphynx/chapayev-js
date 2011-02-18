@@ -30,11 +30,6 @@ function pairPlayers(p1Id, p2Id, p1Nick, p2Nick) {
     invites[p2Id] = [];
 }
 
-// well, it's not 100% unique, but enough for now
-function makeNickUnique(nick) {
-    return (nicks[nick]) ? nick + (Date.now() % 10000) : nick;
-}
-
 function cmdHandler(message, client) {
     var cmdName = message.name;
     var id = client.sessionId;
@@ -43,11 +38,12 @@ function cmdHandler(message, client) {
 
     switch (cmdName) {
     case "nick":
-        var newNick = makeNickUnique(message.arg);
-        var oldNick = players.update(id, newNick);
+        var nicks = players.update(id, message.arg);
+        var oldNick = nicks[0];
+        var newNick = nicks[1];
 
         log("nick has been changed from {0} to {1} for player {2}", oldNick, newNick, id);
-        socket.broadcast({ type: "nickchange", oldNick: oldNick, newNick: newNick }, [client.sessionId]);
+        socket.broadcast({ type: "nickchange", oldNick: oldNick, newNick: newNick }, [id]);
         client.send({ type: "nickack", oldNick: oldNick, nick: newNick });
         break;
 
@@ -95,10 +91,10 @@ function cmdHandler(message, client) {
 
     case "decline":
         var declinerId = id;
-        var declinerNick = nickById(declinerId);
+        var declinerNick = players.nick(declinerId);
 
         inviterNick = message.arg;
-        inviterId = idByNick(inviterNick);
+        inviterId = players.id(inviterNick);
 
         if ((invites[inviterId]) && invites[inviterId].indexOf(declinerId) !== -1) {
             log("player {0} has declined invitation from player {1}", declinerNick, inviterNick);
@@ -122,7 +118,7 @@ function cmdHandler(message, client) {
 
     case "list":
         var list = [];
-        for (sessionId in players) {
+        for (var sessionId in players) {
             list.push(players[sessionId]);
         }
         client.send({ type: "playerslist", list: list });
@@ -133,7 +129,6 @@ function cmdHandler(message, client) {
     };
 }
 
-// Add a connect listener
 socket.on(
     "connection",
     function(client) {
@@ -151,26 +146,27 @@ socket.on(
                     break;
 
                 case "move":
+                    // TODO: broadcast only to opponent!
                     client.broadcast(message, [id]);
                     break;
 
                 case "chatmessage":
-                    message.from = nickById(id);
+                    // stamp it with "from" field and broadcast to others
+                    message.from = players.nick(id);
                     client.broadcast(message, [id]);
                     break;
 
                 case "init":
                     // add the new user to the list of players
-                    var nick = makeNickUnique(message.nick);
-                    players.add(id, nick);
+                    var nick = players.add(id, message.nick);
 
                     // send nick acknowledgement
-                    client.send({type: "nickack", nick : nick});
+                    client.send({ type: "nickack", nick: nick });
 
-                    // Send to the new user the list of active players (including himself)
-                    client.send({ type: "playerslist", list: players.get() }); 
+                    // send to the new user the list of active players (including himself)
+                    client.send({ type: "playerslist", list: players.get() });
 
-                    // Broadcast the new user to all players except the player himself
+                    // broadcast the new user to all players except the player himself
                     socket.broadcast({ type: "new", id: id, who: nick }, [id]);
                     break;
 
@@ -185,19 +181,10 @@ socket.on(
                 var id = this.sessionId;
 
                 // Broadcast the logged out user's id
-                socket.broadcast({ type: "left", id: id, who: nickById(id) });
+                socket.broadcast({ type: "left", id: id, who: players.nick(id) });
 
-                // Remove the user from the list of players
-                delete players[id];
+                // Remove the user from the invites list
                 delete invites[id];
-
-                // Remove from nicks as well
-                for (var nick in nicks) {
-                    if (nicks[nick] === id) {
-                        delete nicks[nick];
-                        break;
-                    }
-                }
             });
     });
 

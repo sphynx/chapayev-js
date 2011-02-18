@@ -1,20 +1,23 @@
 (function() {
      var global = this;
 
-     // constants go here
-
-     // helper functions
-
      global.CH_PlayersTable = function() {
 
          var players = {}; // map: client.sessionId -> player object
          var nicks = {};   // map: player nickname  -> client.sessionId (opposite to players)
 
          function add(id, nk) {
-             nk = unique(nk);
-             players[id] = { nick: nk };
-             nicks[nk] = id;
-             return nk;
+             if (id && nk) {
+                 if (players[id]) {
+                     return update(id, nk)[1];
+                 }
+                 nk = unique(nk);
+                 players[id] = { nick: nk };
+                 nicks[nk] = id;
+                 return nk;
+             } else {
+                 return null;
+             }
          }
 
          function remove(id) {
@@ -26,13 +29,24 @@
          }
 
          function update(id, nk) {
-             var oldNick = unique(nick(id));
-             oldNick && delete nicks[oldNick];
-             if (players[id]) {
-                 players[id].nick = nk;
+             if (id && nk) {
+                 var oldNick = nick(id);
+                 delete nicks[oldNick];
+                 
+                 nk = unique(nk);
+                 nicks[nk] = id;
+
+                 if (players[id]) {
+                     players[id].nick = nk;
+                 } else {
+                     players[id] = { nick: nk };
+                 }
+                 
+                 return [oldNick, nk];
+             } else {
+                 // ?
+                 return [null, null];
              }
-             nicks[nk] = id;
-             return [oldNick, nk];
          }
 
          function reserved(nk) {
@@ -47,8 +61,32 @@
              return nicks[nick];
          }
 
-         function get() {
-             return players;
+         function get(clientId) {
+             return (clientId) ? players[clientId] : players;
+         }
+
+         function nicksList() {
+             var res = [];
+             for (var nk in nicks) {
+                 res.push(nk);
+             }
+             return res;
+         }
+
+         function idList() {
+             var res = [];
+             for (var i in players) {
+                 res.push(i);
+             }
+             return res;
+         }
+
+         function size() {
+             var res = 0;
+             for (var i in nicks) {
+                 res++;
+             }
+             return res;
          }
 
          function unique(nk) {
@@ -61,7 +99,10 @@
              update: update,
              nick: nick,
              id: id,
-             get: get
+             nicks: nicksList,
+             ids: idList,
+             get: get,
+             size: size
          };
      };
 })();

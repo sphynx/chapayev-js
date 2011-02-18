@@ -4,7 +4,7 @@ var http = require("http"),
     util = require("./server-utils");
 
 // data structures for storing players, games, game proposal, etc.
-var players = CH_PlayersTable(),
+var players = p.Table(),
     invites = {}, // map: player id -> list of issued invitations by this player (other player ids)
     games = {};   // TODO
 

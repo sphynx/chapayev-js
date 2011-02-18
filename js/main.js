@@ -16,7 +16,8 @@
          NICK_COOKIE_NAME = "nick",
 
          // network
-         HOST = "eth0.net.ua",
+         //HOST = "eth0.net.ua",
+         HOST = "localhost",
          PORT = 8124,
 
          // console commands and chat messages
@@ -497,7 +498,6 @@
          function initPlayerOnServer() {
             var nick = model.whiteNick();
             socket.send({ type: TYPE_INIT, nick: nick });
-
          }
 
          function initSocket() {

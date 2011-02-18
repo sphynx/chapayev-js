@@ -118,7 +118,7 @@ function cmdHandler(message, client) {
 
     case "list":
         var list = [];
-        for (var sessionId in players) {
+        for (var sessionId in players.get()) {
             list.push(players[sessionId]);
         }
         client.send({ type: "playerslist", list: list });

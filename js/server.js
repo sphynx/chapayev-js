@@ -3,31 +3,17 @@ var http = require("http"),
     p = require("./players"),
     util = require("./server-utils");
 
-// data structures for storing players, games, game proposal, etc.
 var players = p.Table(),
-    invites = {}, // map: player id -> list of issued invitations by this player (other player ids)
-    games = {};   // TODO
+    server = http.createServer(),
+    socket = io.listen(server),
+    log = util.log;
 
-// setup socket and server
-var server = http.createServer();
-var socket = io.listen(server);
-
-var log = util.log;
+var PORT = 8124;
 
 function pairPlayers(p1Id, p2Id, p1Nick, p2Nick) {
     log("pairing players {0} and {1}", p1Nick, p2Nick);
-
-    var p1Msg = { type: "gamestart", opponent: p2Nick, color: "red" };
-    var p2Msg = { type: "gamestart", opponent: p1Nick, color: "white" };
-
-    // two guys are paired, let's start the game!
-    socket.clients[p1Id].send(p1Msg);
-    socket.clients[p2Id].send(p2Msg);
-
-    // empty list of invites for given players, since they already started a game
-    // and all the other invites become invalid
-    invites[p1Id] = [];
-    invites[p2Id] = [];
+    socket.clients[p1Id].send({ type: "gamestart", opponent: p2Nick, color: "red" });
+    socket.clients[p2Id].send({ type: "gamestart", opponent: p1Nick, color: "white" });
 }
 
 function cmdHandler(message, client) {
@@ -48,72 +34,54 @@ function cmdHandler(message, client) {
         break;
 
     case "invite":
-        // inviter -- a player issuing a game request (proposing to play)
-        var inviterId = id;
-        var inviterNick = players.nick(id);
+        // host -- a player issuing a game request (proposing to play)
+        // guest -- his opponent
+        var hostId = id,
+            hostNick = players.nick(id),
+            guestNick = message.arg,
+            guestId = players.id(guestNick);
 
-        // acceptor -- a player who may or may not accept the request (target of request)
-        var acceptorNick = message.arg;
-        var acceptorId = players.id(acceptorNick);
+        players.invite(hostId, guestId);
 
-        // check if inviter has been invited himself
-        // if two players are inviting each other: pair them
-        if (invites[acceptorId] && invites[acceptorId].indexOf(inviterId) !== -1) {
-            log("Mutual invitation for players {0} and {1}", inviterNick, acceptorNick);
-            pairPlayers(inviterId, acceptorId, inviterNick, acceptorNick);
+        // check for cross-invite
+        if (players.isInvited(guestId, hostId)) {
+            players.accept(hostId, guestId);
+            pairPlayers(hostId, guestId, hostNick, guestNick);
+            log("Mutual invitation for players {0} and {1}", hostNick, guestNick);
         } else {
-            // add the invite to invites map
-            invites[inviterId]
-                ? invites[inviterId].push(acceptorId) // add to an existing array
-                : invites[inviterId] = [acceptorId];  // or create a new array with it
-
-            // send an invitation to the acceptor
-            socket.clients[acceptorId].send({ type: "gamerequest", from: inviterNick });
-            log("player {0} has been invited to play with {1}", acceptorNick, inviterNick);
+            socket.clients[guestId].send({ type: "gamerequest", from: hostNick });
+            log("player {0} has been invited to play with {1}", guestNick, hostNick);
         }
         break;
 
     case "accept":
-        acceptorId = id;
-        acceptorNick = players.nick(acceptorId);
+        guestId = id,
+        guestNick = players.nick(id),
+        hostNick = message.arg,
+        hostId = players.id(hostNick);
 
-        inviterNick = message.arg;
-        inviterId = players.id(inviterNick);
-
-        if ((inviterId in invites) && invites[inviterId].indexOf(acceptorId) !== -1) {
-            log("player {0} has accepted invitation from player {1}", acceptorNick, inviterNick);
-            pairPlayers(inviterId, acceptorId, inviterNick, acceptorNick);
+        if (players.accept(hostId, guestId)) {
+            log("player {0} has accepted invitation from player {1}", guestNick, hostNick);
+            pairPlayers(hostId, guestId, hostNick, guestNick);
         } else {
-            log("false accept from {0}", acceptorNick);
+            log("false accept from {0}", guestNick);
         }
 
         break;
 
     case "decline":
-        var declinerId = id;
-        var declinerNick = players.nick(declinerId);
+        guestId = id,
+        guestNick = players.nick(id),
+        hostNick = message.arg,
+        hostId = players.id(hostNick);
 
-        inviterNick = message.arg;
-        inviterId = players.id(inviterNick);
-
-        if ((invites[inviterId]) && invites[inviterId].indexOf(declinerId) !== -1) {
-            log("player {0} has declined invitation from player {1}", declinerNick, inviterNick);
-            var declineMsg = { type: "decline", from: declinerNick };
-            // send "decline" msg to inviter
-            socket.clients[inviterId].send(declineMsg);
-            // remove decliner from invite list as the invite has been declined
-            invites[inviterId].splice(invites[inviterId].indexOf(declinerId), 1);
+        if (players.decline(hostId, guestID)) {
+            socket.clients[hostId].send({ type: "decline", from: guestNick });
+            log("player {0} has declined invitation from player {1}", guestNick, hostNick);
         } else {
-            log("false decline from {0}", declinerNick);
+            log("false decline from {0}", guestNick);
         }
 
-        break;
-
-    case "debug":
-        log("debug info: ");
-        log("players = {0}", JSON.stringify(players));
-        log("nicks = {0}", JSON.stringify(nicks));
-        log("invites = {0}", JSON.stringify(invites));
         break;
 
     case "list":
@@ -184,12 +152,8 @@ socket.on(
                 socket.broadcast({ type: "left", id: id, who: players.nick(id) });
 
                 players.remove(id);
-
-                // Remove the user from the invites list
-                delete invites[id];
             });
     });
 
 // start listening
-server.listen(8124);
-
+server.listen(PORT);

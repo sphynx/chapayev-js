@@ -183,6 +183,8 @@ socket.on(
                 // Broadcast the logged out user's id
                 socket.broadcast({ type: "left", id: id, who: players.nick(id) });
 
+                players.remove(id);
+
                 // Remove the user from the invites list
                 delete invites[id];
             });

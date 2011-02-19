@@ -100,44 +100,26 @@
          var commandElements = commandStr.split(/\s+/);
          var message = null;
          if (commandElements.length > 0) {
-
              if (commandElements[0].charAt(0) === '/') {
                  // it is a command as it starts with slash
                  var commandName = commandElements[0].slice(1);
                  switch (commandName) {
                  case CMD_NICK:
-                     if (commandElements[1] && commandElements[1].length > 0) {
-                         var nick = commandElements[1];
-                         message = { type: TYPE_COMMAND, name: CMD_NICK, arg: nick};
-                     }
-                     break;
-
                  case CMD_INVITE:
-                     if (commandElements[1] && commandElements[1].length > 0) {
-                         message = { type: TYPE_COMMAND, name: CMD_INVITE, arg: commandElements[1] };
-                     }
-                     break;
-
                  case CMD_ACCEPT:
-                     if (commandElements[1] && commandElements[1].length > 0) {
-                         message = { type: TYPE_COMMAND, name: CMD_ACCEPT, arg: commandElements[1] };
-                     }
-                     break;
-
                  case CMD_DECLINE:
+                     // 1-arg command
                      if (commandElements[1] && commandElements[1].length > 0) {
-                         message = { type: TYPE_COMMAND, name: CMD_DECLINE, arg: commandElements[1] };
+                         message = { type: TYPE_COMMAND, name: commandName, arg: commandElements[1] };
                      }
-                     break;
-
-                 case CMD_REPLAY:
-                     message = { type: TYPE_COMMAND, name: CMD_REPLAY };
                      break;
 
                  case CMD_RESET:
                  case CMD_CLEAR:
                  case CMD_DEBUG:
+                 case CMD_REPLAY:
                  case CMD_LIST:
+                     // 0-args command
                      message = { type: TYPE_COMMAND, name: commandName };
                      break;
 

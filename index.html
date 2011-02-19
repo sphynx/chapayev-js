@@ -21,7 +21,7 @@
 
     <!-- Knockout.js templates -->
     <script id="tplPlayers" type="text/html">
-      <li class="player">${name}</li>
+      <li class="player" data-bind="click: function() { CH.invite(name) }">${name}</li>
     </script>
 
   </head>

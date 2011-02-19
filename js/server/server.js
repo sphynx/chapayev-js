@@ -41,16 +41,18 @@ function cmdHandler(message, client) {
             guestNick = message.arg,
             guestId = players.id(guestNick);
 
-        players.invite(hostId, guestId);
-
-        // check for cross-invite
-        if (players.isInvited(guestId, hostId)) {
-            players.accept(hostId, guestId);
-            pairPlayers(hostId, guestId, hostNick, guestNick);
-            log("Mutual invitation for players {0} and {1}", hostNick, guestNick);
+        if (players.invite(hostId, guestId)) {
+            // check for cross-invite
+            if (players.isInvited(guestId, hostId)) {
+                players.accept(hostId, guestId);
+                pairPlayers(hostId, guestId, hostNick, guestNick);
+                log("Mutual invitation for players {0} and {1}", hostNick, guestNick);
+            } else {
+                socket.clients[guestId].send({ type: "gamerequest", from: hostNick });
+                log("player {0} has been invited to play with {1}", guestNick, hostNick);
+            }
         } else {
-            socket.clients[guestId].send({ type: "gamerequest", from: hostNick });
-            log("player {0} has been invited to play with {1}", guestNick, hostNick);
+            client.send({ type: "error", text: "incorrect invite" });
         }
         break;
 

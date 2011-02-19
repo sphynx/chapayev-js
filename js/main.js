@@ -1,3 +1,5 @@
+var CH;
+
 (function() {
      // to make global context more apparent
      var global = this;
@@ -580,6 +582,10 @@
                      consoleAppend("* new player arrived: {0}".format(msg.who));
                      break;
 
+                 case "error":
+                     consoleAppend("error: {0}".format(msg.text));
+                     break;
+
                  default:
                      consoleAppend("raw message from server: " + JSON.stringify(msg));
 
@@ -606,15 +612,21 @@
 
          // public interface
          return {
-             init: init
+             init: init,
+             invite: function(name) {
+                 consoleAppend("inviting {0}...".format(name));
+                 socket.send({ type: TYPE_COMMAND, name: CMD_INVITE, arg: name });
+             }
          };
      };
 
 })();
 
+
 // main entry point wrapped in jQuery $(...)
 $(
     function() {
-        CH_Game().init();
+        CH = CH_Game();
+        CH.init();
     }
 );

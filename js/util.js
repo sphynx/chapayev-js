@@ -24,10 +24,7 @@ DS_utils.isEmpty = function(obj) {
 DS_utils.log = function(msg) {
 
     // convert arguments to real array
-    var args = Array.prototype.slice.call(arguments);
-
-    // remove first argument (msg)
-    args.splice(0, 1);
+    var args = Array.prototype.slice.call(arguments, 1);
 
     // format string if there is additional parameters
     if (args.length > 0) {

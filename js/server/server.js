@@ -1,7 +1,7 @@
 var http = require("http"),
     io = require("socket.io"),
     p = require("./players"),
-    util = require("./server-utils");
+    util = require("../utils.js");
 
 var players = p.Table(),
     server = http.createServer(),

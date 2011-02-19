@@ -1,4 +1,4 @@
-var DS_utils = window["DS_utils"] = {};
+var DS_utils = this["DS_utils"] = {};
 
 // util function for easy formatting
 String.prototype.format = function() {
@@ -73,3 +73,8 @@ DS_utils.readCookie = function(name) {
 DS_utils.deleteCookie = function(name) {
 	createCookie(name, "", -1);
 };
+
+/// allow using on server-side as well:
+if (typeof exports !== "undefined") {
+    exports.log = DS_utils.log;
+}

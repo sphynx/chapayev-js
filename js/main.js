@@ -551,8 +551,10 @@ var CH;
                      break;
 
                  case "gamerequest":
-                     consoleAppend("* {0} want to play with you! Please type /accept {1} or /decline {2}".format(
+                     consoleAppend("* {0} wants to play with you! Please type /accept {1} or /decline {2}".format(
                                        msg.from, msg.from, msg.from));
+                     var res = confirm("{0} wants to play with you! Do you want to accept?".format(msg.from));
+                     socket.send({type: "cmd", name: res ? "accept" : "decline", arg: msg.from});
                      break;
 
                  case "decline":

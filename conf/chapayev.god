@@ -1,4 +1,4 @@
-APP_ROOT = "/home/sphynx/js"
+APP_ROOT = "/home/sphynx/js/chapayev"
 
 God.pid_file_directory = "#{APP_ROOT}/pids"
 

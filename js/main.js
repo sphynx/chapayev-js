@@ -18,8 +18,8 @@ var CH;
          NICK_COOKIE_NAME = "nick",
 
          // network
-         //HOST = "eth0.net.ua",
-         HOST = "localhost",
+         HOST = "eth0.net.ua",
+         //HOST = "localhost",
          PORT = 8124,
 
          // console commands and chat messages

@@ -335,15 +335,24 @@ var CH;
 
          // after any change in model.all() we check if the game has ended
          function checkResult() {
+             var gameFinished = false;
              if (model.red().length === 0 && model.white().length > 0) {
                  model.redResult("lost");
                  model.whiteResult("won");
+                 gameFinished = true;
              } else if (model.white().length === 0 && model.red().length > 0) {
                  model.whiteResult("lost");
                  model.redResult("won");
+                 gameFinished = true;
              } else if (model.white().length === 0 && model.red().length === 0) {
                  model.redResult("draw");
                  model.whiteResult("draw");
+                 gameFinished = true;
+             }
+
+             if (gameFinished) {
+                 var result = model.myColor() == "red" ? model.redResult() : model.whiteResult();
+                 socket.send({ type: "gameresult", result: result });
              }
          }
 
@@ -588,9 +597,13 @@ var CH;
                      consoleAppend("error: {0}".format(msg.text));
                      break;
 
+                 case "gamefinished":
+                     var txt = (msg.result === "draw") ? "it is draw" : ("you " + msg.result);
+                     consoleAppend("server: the game has finished, {0}".format(txt));
+                     break;
+
                  default:
                      consoleAppend("raw message from server: " + JSON.stringify(msg));
-
                  }
              };
 

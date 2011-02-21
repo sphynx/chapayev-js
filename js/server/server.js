@@ -87,11 +87,7 @@ function cmdHandler(message, client) {
         break;
 
     case "list":
-        var list = [];
-        for (var sessionId in players.get()) {
-            list.push(players[sessionId]);
-        }
-        client.send({ type: "playerslist", list: list });
+        client.send({ type: "playerslist", list: players.get() });
         break;
 
     default:
@@ -138,6 +134,11 @@ socket.on(
 
                     // broadcast the new user to all players except the player himself
                     socket.broadcast({ type: "new", id: id, who: nick }, [id]);
+                    break;
+
+                case "gameresult":
+                    // TODO: compare results from both players
+                    client.send({ type: "gamefinished", result: message.result });
                     break;
 
                 default:

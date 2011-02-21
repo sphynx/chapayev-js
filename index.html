@@ -56,10 +56,10 @@
 
     <ul id="players" data-bind="template: {
          name: 'tplPlayers',
-         foreach: players,
-         beforeRemove: function(elem) { $(elem).fadeOut(1500) },
-         afterAdd: function(elem) { $(elem).hide().fadeIn(1500) } }">
+         foreach: players }">
     </ul>
+         <!-- afterAdd: function(elem) { $(elem).hide().fadeIn(1500) } }"> -->
+         <!-- beforeRemove: function(elem) { $(elem).fadeOut(1500) }, -->
 
   </body>
 </html>

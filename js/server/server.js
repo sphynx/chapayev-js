@@ -77,7 +77,7 @@ function cmdHandler(message, client) {
         hostNick = message.arg,
         hostId = players.id(hostNick);
 
-        if (players.decline(hostId, guestID)) {
+        if (players.decline(hostId, guestId)) {
             socket.clients[hostId].send({ type: "decline", from: guestNick });
             log("player {0} has declined invitation from player {1}", guestNick, hostNick);
         } else {

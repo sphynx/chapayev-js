@@ -1,9 +1,11 @@
 var http = require("http"),
     io = require("socket.io"),
     p = require("./players"),
+    g = require("./games"),
     util = require("../utils.js");
 
 var players = p.Table(),
+    games = g.Games(),
     server = http.createServer(),
     socket = io.listen(server),
     log = util.log;
@@ -14,6 +16,7 @@ function pairPlayers(p1Id, p2Id, p1Nick, p2Nick) {
     log("pairing players {0} and {1}", p1Nick, p2Nick);
     socket.clients[p1Id].send({ type: "gamestart", opponent: p2Nick, color: "red" });
     socket.clients[p2Id].send({ type: "gamestart", opponent: p1Nick, color: "white" });
+    games.start(p1Id, p2Id);
 }
 
 function cmdHandler(message, client) {
@@ -112,8 +115,8 @@ socket.on(
                     break;
 
                 case "move":
-                    // TODO: broadcast only to opponent!
-                    client.broadcast(message, [id]);
+                    var oppoId = games.opponentId(id);
+                    socket.clients[oppoId].send(message);
                     break;
 
                 case "chatmessage":
@@ -139,6 +142,7 @@ socket.on(
                 case "gameresult":
                     // TODO: compare results from both players
                     client.send({ type: "gamefinished", result: message.result });
+                    games.finish(id);
                     break;
 
                 default:
@@ -155,6 +159,9 @@ socket.on(
                 socket.broadcast({ type: "left", id: id, who: players.nick(id) });
 
                 players.remove(id);
+                games.finish(id);
+
+                log("client {0} has disconnected", id);
             });
     });
 

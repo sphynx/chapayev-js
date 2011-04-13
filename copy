@@ -1,4 +1,3 @@
-scp js/server/server.js sphynx@eth0.net.ua:js/chapayev/
-scp js/server/players.js sphynx@eth0.net.ua:js/chapayev/
+scp js/server/*.js sphynx@eth0.net.ua:js/chapayev/
 scp js/utils.js sphynx@eth0.net.ua:js/
 ssh sphynx@eth0.net.ua god restart chapayev

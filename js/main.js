@@ -610,7 +610,7 @@ var CH;
              handlers.disconnect = function() {
                  model.status("disconnected");
                  consoleAppend("system: disconnected");
-                 socket.connect();
+                 //socket.connect();
              };
 
              socket = CH_Socket(HOST, PORT, handlers);
@@ -634,7 +634,6 @@ var CH;
              }
          };
      };
-
 })();
 
 

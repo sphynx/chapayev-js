@@ -165,6 +165,7 @@ var CH;
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
              gameMode: ko.observable(GAME_MODE_SINGLE),
+             botTurn: null,
              myColor: ko.observable("white"),
              whiteResult: ko.observable("-"),
              redResult: ko.observable("-"),
@@ -428,13 +429,7 @@ var CH;
 
                      switch (model.gameMode()) {
                      case GAME_MODE_BOT:
-                         var botTurn = bot.makeTurn(model.all, ball.name, [ball.vx, ball.vy]);
-                         var ball = model.ballByName(botTurn.piece);
-                         if (ball) {
-                             ball.vx = botTurn.vector[0];
-                             ball.vy = botTurn.vector[1];
-                             startBall(ball);
-                         }
+                         model.botTurn = bot.makeTurn(model.all, ball.name, [ball.vx, ball.vy]);
                          break;
 
                      case GAME_MODE_NETWORK:

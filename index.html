@@ -17,6 +17,7 @@
     <script src="js/utils.js"></script>
     <script src="js/collision.js"></script>
     <script src="js/socket.js"></script>
+    <script src="js/bot.js"></script>
     <script src="js/main.js"></script>
 
     <!-- Knockout.js templates -->
@@ -42,6 +43,9 @@
       <span id="whiteNick" class="nick" data-bind="text: whiteNick"></span>
       <span id="whiteResult" class="result" data-bind="text: whiteResult">won</span>
 
+        <div id="bot-block">
+            <span id="botButton" class="player" onClick="CH.playWithBot();">Play with bot</span>
+        </div>
       <div id="current-block">
         Current move:
         <span id="currentMove" data-bind="text: currentMove, style: {color: currentMove()}"></span>

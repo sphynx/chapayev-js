@@ -22,6 +22,11 @@ var CH;
          //HOST = "localhost",
          PORT = 8124,
 
+         // game modes
+         GAME_MODE_SINGLE = 0,
+         GAME_MODE_BOT = 1,
+         GAME_MODE_NETWORK = 2,
+
          // console commands and chat messages
          TYPE_COMMAND = "cmd",
          TYPE_CHAT_MSG = "chatmessage",
@@ -140,6 +145,7 @@ var CH;
          // private instance variable
          var raphael, // Raphael object
              socket, // For connection to server
+             bot, // opponent bot
 
              input, // console input
              output, // console output
@@ -158,7 +164,7 @@ var CH;
              redNick: ko.observable(utils.readCookie(NICK_COOKIE_NAME) || DEFAULT_NICK),
              whiteMove: ko.observable(true),
              moveInProgress: ko.observable(false),
-             multiplayer: ko.observable(false),
+             gameMode: ko.observable(GAME_MODE_SINGLE),
              myColor: ko.observable("white"),
              whiteResult: ko.observable("-"),
              redResult: ko.observable("-"),
@@ -173,7 +179,7 @@ var CH;
              isAllowedToClick: function(team) {
                  return !this.moveInProgress()
                      && this.currentMove() === team
-                     && (!this.multiplayer() || this.myColor() === team);
+                     && (this.gameMode() === GAME_MODE_SINGLE || this.myColor() === team);
              },
 
              reset: function() {
@@ -420,8 +426,20 @@ var CH;
 
                      log("mouse clicked: ball {0}, vx = {1}, vy = {2}", ball.name, ball.vx, ball.vy);
 
-                     if (model.multiplayer()) {
-                         socket.send({ type: "move", piece: ball.name, vector: [ball.vx, ball.vy]});
+                     switch (model.gameMode()) {
+                     case GAME_MODE_BOT:
+                         var botTurn = bot.makeTurn(model.all, ball.name, [ball.vx, ball.vy]);
+                         var ball = model.ballByName(botTurn.piece);
+                         if (ball) {
+                             ball.vx = botTurn.vector[0];
+                             ball.vy = botTurn.vector[1];
+                             startBall(ball);
+                         }
+                         break;
+
+                     case GAME_MODE_NETWORK:
+                         socket.send({ type: "move", piece: ball.name, vector: [ball.vx, ball.vy] });
+                         break;
                      }
 
                      startBall(ball);
@@ -518,7 +536,7 @@ var CH;
                          model.whiteNick(msg.opponent);
                      }
                      model.myColor(msg.color);
-                     model.multiplayer(true);
+                     model.gameMode(GAME_MODE_NETWORK);
                      model.lastOpponent = msg.opponent;
                      consoleAppend("* new game has started!");
                      break;
@@ -617,12 +635,22 @@ var CH;
              socket.connect();
          }
 
+         function initBot() {
+             bot = CH_Bot();
+         }
+
          function init() {
              initUI();
              initSocket();
+             initBot();
              ko.applyBindings(model);
              drawBoard();
              resetPieces();
+         }
+
+         function playWithBot() {
+             resetPieces();
+             model.gameMode(GAME_MODE_BOT);
          }
 
          // public interface
@@ -631,7 +659,8 @@ var CH;
              invite: function(name) {
                  consoleAppend("inviting {0}...".format(name));
                  socket.send({ type: TYPE_COMMAND, name: CMD_INVITE, arg: name });
-             }
+             },
+             playWithBot: playWithBot
          };
      };
 })();

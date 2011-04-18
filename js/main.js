@@ -22,6 +22,9 @@ var CH;
          //HOST = "localhost",
          PORT = 8124,
 
+         FAYE_URL = "http://217.20.175.224:8200",
+         FAYE_MOUNTPOINT = FAYE_URL + "/faye",
+
          // game modes
          GAME_MODE_SINGLE = 0,
          GAME_MODE_BOT = 1,
@@ -144,7 +147,8 @@ var CH;
      global.CH_Game = function() {
          // private instance variable
          var raphael, // Raphael object
-             socket, // For connection to server
+             socket, // for connection to server
+             faye, // pub-sub messaging client
              bot, // opponent bot
 
              input, // console input
@@ -489,6 +493,7 @@ var CH;
                                  return; // don't need to send to the server
                              }
 
+                             faye.publish('/commands', message);
                              socket.send(message);
                              log("client: Sent object {0}", JSON.stringify(message));
                          } else {
@@ -504,6 +509,17 @@ var CH;
          function initPlayerOnServer() {
             var nick = model.whiteNick();
             socket.send({ type: TYPE_INIT, nick: nick });
+
+            // send AJAX-request to approve a nick
+            // (alternative to sending in socket)
+            $.ajax({
+                url: FAYE_URL + "/init",
+                dataType: "jsonp",
+                data: { nick : nick },
+                success: function(data) {
+                    alert("Approved nick from server = " + data.nick);
+                }
+            });
          }
 
          function initSocket() {
@@ -634,9 +650,19 @@ var CH;
              bot = CH_Bot();
          }
 
+         function initFaye() {
+             faye = new Faye.Client(FAYE_MOUNTPOINT);
+
+             faye.subscribe('/commands',
+                 function(message) {
+                    alert('Got a message from /commands channel');
+             });
+         }
+
          function init() {
              initUI();
              initSocket();
+             initFaye();
              initBot();
              ko.applyBindings(model);
              drawBoard();

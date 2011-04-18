@@ -1,1 +1,1 @@
-scp js/server/server-faye.js sphynx@217.20.175.224:chapayev/
+scp js/server/*.js sphynx@217.20.175.224:faye/

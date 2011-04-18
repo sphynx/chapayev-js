@@ -518,8 +518,13 @@ var CH;
                 data: { nick : nick },
                 success: function(data) {
                     alert("Approved nick from server = " + data.nick);
+                    faye.subscribe("player/" + nick, privateMsgHandler);
                 }
             });
+         }
+
+         function privateMsgHandler(msg) {
+             alert("Got a private message " + JSON.stringify(msg));
          }
 
          function initSocket() {
@@ -654,8 +659,14 @@ var CH;
              faye = new Faye.Client(FAYE_MOUNTPOINT);
 
              faye.subscribe('/commands',
-                 function(message) {
+                 function(msg) {
                     alert('Got a message from /commands channel');
+             });
+
+             faye.subscribe('/new',
+                 function(msg) {
+                     model.players.push({ name: msg.who });
+                     consoleAppend("* new player arrived: {0}".format(msg.who));
              });
          }
 

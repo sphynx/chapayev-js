@@ -1,0 +1,34 @@
+  == Pub/sub channels list. ==
+
+/chat
+For general chat, everyone can read, everyone can write
+
+/public
+For public messages, broadcasted to everyone.
+ "new" -- new player has joined
+ "left" -- player has left
+ "nickchange" -- nick has been changed
+
+/player/<nick>
+For private messages addressed only to the particular client.
+ "gamerequest" -- request to play a game
+ "gamestart" -- request has been accepted, contains game id, should listen to
+                the corresonding channel after this (e.g. /game/123)
+ "decline" -- request has been declined
+ "playerslist" -- list of current players
+
+/game/<game_id>
+For messages during the game
+ "move"
+ "gamefinished"
+
+/server
+The channel which is only listened by the server (perhaps these messages should be
+implemented by JSONP requests?)
+ "nick" -- to change nick
+ "cmd"
+ "invite" ??
+ "accept" ??
+ "decline" ??
+ "list" ??
+ "gameresult" ??
